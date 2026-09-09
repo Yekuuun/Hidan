@@ -6,6 +6,7 @@ OUT_DIR 	:= ./bin
 
 INCLUDE 	:= ./includes
 MODULES		:= ./modules 
+LIB			:= ./lib
 
 BPF_SRC := $(SRC_DIR)/main.bpf.c 
 BPF_OBJ := $(OUT_DIR)/main.bpf.o
@@ -18,6 +19,7 @@ BPF_CFLAGS := \
 	-D__TARGET_ARCH_$(ARCH) \
 	-I$(INCLUDE) \
 	-I$(MODULES) \
+	-I$(LIB) \
 	-I/usr/include/bpf \
 	-I/usr/include/$(shell uname -m)-linux-gnu
 

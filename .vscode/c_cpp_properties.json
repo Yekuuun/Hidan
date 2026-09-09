@@ -1,21 +1,23 @@
 {
     "configurations": [
         {
-            "name": "Linux",
+            "name": "eBPF",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/usr/src/linux-headers-6.12.101+deb13-amd64/include",
-                "/usr/src/linux-headers-6.12.101+deb13-amd64/arch/x86/include",
-                "/usr/src/linux-headers-6.12.101+deb13-amd64/arch/x86/include/generated"
+                "/usr/include",
+                "/usr/include/bpf"
             ],
             "defines": [
-                "__KERNEL__",
-                "MODULE",
-                "CONFIG_X86_64"
+                "__TARGET_ARCH_x86",
+                "__BPF_TRACING__"
             ],
-            "compilerPath": "/usr/bin/gcc",
+            "compilerPath": "/usr/bin/clang",
+            "compilerArgs": [
+                "-target", "bpf",
+                "-g", "-O2"
+            ],
             "cStandard": "gnu11",
-            "intelliSenseMode": "linux-gcc-x64"
+            "intelliSenseMode": "linux-clang-x64"
         }
     ],
     "version": 4

