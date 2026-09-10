@@ -32,7 +32,7 @@ typedef struct ebpf_event_hdr {
  * Utility function for setting hdr attributes.
  */
 #define SET_EVENT_HDR(_type, _size, _timestamp) \
-((ebpf_event_hdr){                           \
+((ebpf_event_hdr){                              \
     .type      = (_type),                       \
     .size      = (_size),                       \
     .timestamp = (_timestamp)                   \
