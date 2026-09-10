@@ -4,11 +4,11 @@
  * @author Yekuuun
  */
 
-#ifndef BPF_UTILS_H
-#define BPF_UTILS_H
+#ifndef FT_UTILS_H
+#define FT_UTILS_H
 
 #include "vmlinux.h"
-#include "bpf_config.h"
+#include "../includes/bpf_config.h"
 
 //----------------------------------------------------
 // ┌────────────────────────────────────┐

@@ -1,2 +1,8 @@
+#kernel
 vmlinux.h*
 main.bpf.o*
+src/kernel/bin
+
+#Deamon
+src/Deamon/bin
+src/Deamon/obj
