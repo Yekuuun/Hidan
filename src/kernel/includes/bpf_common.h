@@ -10,6 +10,13 @@
 #include "../includes/bpf_config.h"
 
 /**
+ * Nigthmares from Windows...
+ */
+static __always_inline void __rtl_secure_zero_memory(void *dst, __u32 size){
+    __builtin_memset(dst, 0, size);
+}
+
+/**
  * Base function to resolve real binary filename. Avoiding using comm since is easily updatable.
  * 
  * @param dst  => buffer to contain result (note : the *dst contains enough memory for result)

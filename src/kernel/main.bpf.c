@@ -9,6 +9,7 @@
 
 #include "./includes/bpf_maps.h"
 #include "./includes/bpf_config.h"
+#include "./data/bpf_ringbuf.h"
 
 //modules
 #include "./modules/mod_hide_from.h"

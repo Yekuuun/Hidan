@@ -23,6 +23,10 @@
 #define TASK_COMM_LEN 16
 #endif
 
+#ifndef MAX_PATH
+#define MAX_PATH
+#endif
+
 #ifndef MAX_ENTRIES
 #define MAX_ENTRIES 128
 #endif
