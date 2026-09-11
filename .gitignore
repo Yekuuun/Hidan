@@ -6,3 +6,5 @@ src/kernel/bin
 #Deamon
 src/Deamon/bin
 src/Deamon/obj
+
+src/out*

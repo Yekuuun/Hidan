@@ -1,4 +1,5 @@
 ﻿using Deamon.Ebpf;
+using Deamon.Logger;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -12,11 +13,7 @@ internal class Program
         var builder = ConfigureAppBuilder(args);
 
         builder.Services.AddEbpf(
-            ebpfConfiguration: new EbpfConfiguration()
-            {
-                ProgramName = "Hidan",
-                ProgramPath = "main.bpf.o"
-            },
+            ebpfConfiguration: new EbpfConfiguration(){ ProgramName = "Hidan", ProgramPath = "main.bpf.o" },
             configuration:builder.Configuration.GetSection("Ebpf")
         );
 
@@ -25,8 +22,9 @@ internal class Program
         {
             await host.RunAsync();
         }
-        catch(Exception)
+        catch(Exception ex)
         {
+            DeamonLogger.WriteLog(ELogError.ERROR, $"Global app error : {ex.Message}");
             return;
         }
     }

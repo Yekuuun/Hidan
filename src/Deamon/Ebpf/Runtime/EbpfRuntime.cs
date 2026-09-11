@@ -1,7 +1,7 @@
-using Deamon.Ebpf.Abstraction;
-using Microsoft.Extensions.Logging;
 using Mango;
 using Deamon.Logger;
+using Deamon.Ebpf.Abstraction;
+using Microsoft.Extensions.Logging;
 
 namespace Deamon.Ebpf.Runtime;
 
@@ -55,6 +55,7 @@ internal class EbpfRuntime(EbpfConfiguration config, ILogger<EbpfRuntime> logger
             //do something.
             //....
 
+            _state = EbpfState.Running;
             return true;
         }
         catch(Exception)
@@ -111,7 +112,9 @@ internal class EbpfRuntime(EbpfConfiguration config, ILogger<EbpfRuntime> logger
     private void CleanBpfObject()
     {
         _bpfObject?.Dispose();
+
         _bpfObject = null;
+        _state     = EbpfState.Stopped;
     }
 
     #endregion
