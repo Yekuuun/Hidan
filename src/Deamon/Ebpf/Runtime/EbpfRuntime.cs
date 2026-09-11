@@ -37,6 +37,12 @@ internal class EbpfRuntime(EbpfConfiguration config, ILogger<EbpfRuntime> logger
         {
             await _semLock.WaitAsync();
 
+            if (_state == EbpfState.Running)
+            {
+                DeamonLogger.WriteLog(ELogError.WARNING, $"{_config.ProgramName} already loaded, skipping.");
+                return true;
+            }
+
             if (!IsValidProgFile())
             {
                 DeamonLogger.WriteLog(ELogError.ERROR, "Invalid ebpf object file.");
@@ -106,7 +112,15 @@ internal class EbpfRuntime(EbpfConfiguration config, ILogger<EbpfRuntime> logger
     /// <exception cref="NotImplementedException"></exception>
     public void Dispose()
     {
-        CleanBpfObject();
+        _semLock.Wait();
+        try
+        {
+            CleanBpfObject();
+        }
+        finally
+        {
+            _semLock.Release();
+        }
     }
 
     private void CleanBpfObject()

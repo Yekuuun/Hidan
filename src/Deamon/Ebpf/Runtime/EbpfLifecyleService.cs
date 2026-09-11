@@ -10,10 +10,14 @@ internal sealed class EbpfLifecycleService(EbpfRuntime runtime) : IHostedService
     {
         bool load = await runtime.LoadAsync();
         if(!load)
-            return;
+            throw new InvalidOperationException($"Failed to load ebpf program '{runtime.GetProgName}'.");
 
         DeamonLogger.WriteLog(ELogError.OK, $"{runtime.GetProgName} running.");
     }
 
-    public Task StopAsync(CancellationToken cancellationToken) => Task.Run(() => runtime.ShutDown(), cancellationToken);
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        runtime.ShutDown();
+        return Task.CompletedTask;
+    }
 }
