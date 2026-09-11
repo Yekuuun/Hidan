@@ -13,6 +13,8 @@
 #include "../data/bpf_ringbuf.h"
 #include "../lib/ft_utils.h"
 
+#define SIG_TEST 65
+
 /**
  * Fexit on syskill. easy to debug.
  */
@@ -21,6 +23,10 @@ int BPF_PROG(fexit_syskill, pid_t pid, int sig, long ret)
 {
     //err.
     if(ret <= 0)
+        return ret;
+
+    //only handle dedicated signal for testing.
+    if(sig != SIG_TEST)
         return ret;
 
     char comm[TASK_COMM_LEN] = {0};
