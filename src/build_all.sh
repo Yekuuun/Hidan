@@ -27,6 +27,8 @@ cp_out_files() {
 # -----------------------------------------
 
 echo -e "[*] STARTING COMPILATION :\n"
+rm -rf $OUT_DIR
+
 sleep 0.5
 
 # Compile all
@@ -55,7 +57,7 @@ echo "[*] Copying kernel files..."
 cp -a "./kernel/bin/." "$OUT_DIR/"
 
 echo "[*] Copying daemon..."
-cp -a "./Deamon/bin/Debug/$NET_FRAMEWORK/$DEAMON" "$OUT_DIR/"
+cp -a "./Deamon/bin/Debug/$NET_FRAMEWORK/." "$OUT_DIR/"
 
 echo -ne "[*] Output files: \n"
 find "$OUT_DIR" -maxdepth 2 -type f

@@ -13,7 +13,7 @@ internal static class DeamonLogger
         };
 
         Console.ForegroundColor = color;
-        Console.WriteLine($"{prefix} Moulinette : {msg}");
+        Console.WriteLine($"{prefix} Deamon : {msg}");
         Console.ResetColor();
     }
 }

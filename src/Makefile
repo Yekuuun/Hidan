@@ -4,7 +4,7 @@ KERNEL_DIR    := kernel
 DAEMON_DIR    := Deamon
 DAEMON_PROJ   := $(DAEMON_DIR)/Deamon.csproj
 
-CONFIGURATION ?= Release
+CONFIGURATION ?= Debug
 RID           ?= linux-x64
 OUT_DIR       ?= build
 DOTNET        ?= dotnet
