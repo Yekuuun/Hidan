@@ -25,7 +25,7 @@ static __always_inline int ft_isdigit(int c){
 
 /**
  * Check if an str is a valid number.
- * @max => borne max de lecture (doit être une constante connue à l'appel).
+ * @max => must be know at call.
  */
 static __always_inline int ft_isnumeric(const char *s, __u32 max){
     for (__u32 i = 0; i < max; i++) {
@@ -39,7 +39,7 @@ static __always_inline int ft_isnumeric(const char *s, __u32 max){
 
 /**
  * Homemade atoi.
- * @max => borne max de lecture (doit être une constante connue à l'appel).
+ * @max => must be know at call.
  */
 static __always_inline int ft_atoi(const char *s, __u32 max){
     __u32 i = 0;
@@ -77,7 +77,7 @@ static __always_inline int ft_atoi(const char *s, __u32 max){
  * strcmp - Compare two strings
  * @cs: One string
  * @ct: Another string
- * @max: borne max de comparaison (doit être une constante connue à l'appel).
+ * @max: must be know at call (max len)
  *
  * https://elixir.bootlin.com/linux/v6.17.3/source/drivers/firmware/efi/libstub/string.c#L68
  */
