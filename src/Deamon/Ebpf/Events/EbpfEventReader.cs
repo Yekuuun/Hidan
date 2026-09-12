@@ -1,9 +1,8 @@
 using System.Runtime.CompilerServices;
 using Deamon.Ebpf.Abstraction;
-using Deamon.Ebpf.Events;
 using Deamon.Logger;
 
-namespace Deamon.Ebpf.Logging;
+namespace Deamon.Ebpf.Events;
 
 /// <summary>
 /// Validates the raw records produced by the runtime & turns them into
@@ -45,8 +44,7 @@ internal sealed class EbpfEventReader(IEbpfRawEventSource source) : IEbpfEventRe
 
         if(!EbpfEventHeader.TryParse(raw, out var header))
         {
-            DeamonLogger.WriteLog(ELogError.WARNING,
-                $"Record too short for a header : {raw.Length}B, need {EbpfEventHeader.HeaderSize}B.");
+            DeamonLogger.WriteLog(ELogError.WARNING, $"Record too short for a header : {raw.Length}B, need {EbpfEventHeader.HeaderSize}B.");
             return false;
         }
 
@@ -55,8 +53,7 @@ internal sealed class EbpfEventReader(IEbpfRawEventSource source) : IEbpfEventRe
         //raw.Length - HeaderSize instead.
         if(header.Size != raw.Length)
         {
-            DeamonLogger.WriteLog(ELogError.WARNING,
-                $"[{header.Type}] header size {header.Size}B does not match record {raw.Length}B.");
+            DeamonLogger.WriteLog(ELogError.WARNING, $"[{header.Type}] header size {header.Size}B does not match record {raw.Length}B.");
             return false;
         }
 
