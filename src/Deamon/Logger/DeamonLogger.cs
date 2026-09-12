@@ -4,6 +4,10 @@ internal static class DeamonLogger
 {
     public static void WriteLog(ELogError level, string msg)
     {
+#if !DEBUG 
+        return;
+#endif
+
         var (prefix, color) = level switch
         {
             ELogError.OK      => ("[*]", ConsoleColor.Green),
