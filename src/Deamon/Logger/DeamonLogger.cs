@@ -2,12 +2,14 @@ namespace Deamon.Logger;
 
 internal static class DeamonLogger
 {
+    /// <summary>
+    /// Global Deamon console logging handler.
+    /// </summary>
+    /// <param name="level"></param>
+    /// <param name="msg"></param>
     public static void WriteLog(ELogError level, string msg)
     {
-#if !DEBUG 
-        return;
-#endif
-
+#if DEBUG 
         var (prefix, color) = level switch
         {
             ELogError.OK      => ("[*]", ConsoleColor.Green),
@@ -19,5 +21,8 @@ internal static class DeamonLogger
         Console.ForegroundColor = color;
         Console.WriteLine($"{prefix} Deamon : {msg}");
         Console.ResetColor();
+#else
+        return;
+#endif
     }
 }

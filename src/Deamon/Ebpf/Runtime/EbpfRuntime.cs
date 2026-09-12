@@ -1,18 +1,20 @@
 using Mango;
 using Deamon.Logger;
 using Deamon.Ebpf.Abstraction;
+using Microsoft.Extensions.Configuration;
+using Deamon.Ebpf.Config;
 
 namespace Deamon.Ebpf.Runtime;
 
 /// <summary>
 /// Global class encapsulating Ebpf runtime.
 /// </summary>
-internal class EbpfRuntime(EbpfConfiguration config) : IDisposable
+internal class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configuration) : IDisposable
 {
     #region CONF
-    private readonly EbpfConfiguration _config = config;
+    private readonly EbpfConfiguration _bpfConfig  = bpfConfig;
+    private readonly IConfiguration _configuration = configuration;
     private readonly SemaphoreSlim _semLock = new(1, 1);
-    private const string RingBufferMapName = "event_output";
 
     #endregion
 
@@ -21,6 +23,7 @@ internal class EbpfRuntime(EbpfConfiguration config) : IDisposable
 
     private BpfObject? _bpfObject = null;
     private readonly List<BpfLink> _bpfLinks = [];
+    private readonly Dictionary<string, BpfMap> _bpfMaps = [];
     private BpfRingBuffer? _ringBuffer = null;
 
     private bool _disposed = false;
@@ -28,8 +31,8 @@ internal class EbpfRuntime(EbpfConfiguration config) : IDisposable
 
     #region CORE
 
-    public string GetProgName => _config.ProgramName;
-    public string GetProgPath => _config.ProgramPath;
+    public string GetProgName => _bpfConfig.ProgramName;
+    public string GetProgPath => _bpfConfig.ProgramPath;
 
     /// <summary>
     /// Main function to start the EbpfRuntime.
@@ -43,16 +46,29 @@ internal class EbpfRuntime(EbpfConfiguration config) : IDisposable
 
         try
         {
+            bool isDebug = _configuration.GetSection("GlobalConfig").GetValue<bool>("Debug");
+
             if(_state == EbpfState.Running)
             {
-                DeamonLogger.WriteLog(ELogError.WARNING, $"{_config.ProgramName} already loaded, skipping.");
+                DeamonLogger.WriteLog(ELogError.WARNING, $"{_bpfConfig.ProgramName} already loaded, skipping.");
                 return true;
             }
 
-            if(!LoadObject() || !LoadPrograms() || !LoadRingBuffer())
+            //maps are validated before attaching anything, so a mismatched .o
+            //fails before we touch kernel state.
+            if(!LoadObject() || !LoadMaps() || !LoadPrograms())
             {
                 CleanUpUnsafe();
                 return false;
+            }
+
+            if(isDebug)
+            {
+                if(!LoadRingBuffer())
+                {
+                    CleanUpUnsafe();
+                    return false;
+                }
             }
 
             _state = EbpfState.Running;
@@ -85,10 +101,10 @@ internal class EbpfRuntime(EbpfConfiguration config) : IDisposable
             return false;
         }
 
-        var openResult = BpfObject.Open(_config.ProgramPath);
+        var openResult = BpfObject.Open(_bpfConfig.ProgramPath);
         if(!openResult.IsSuccess)
         {
-            DeamonLogger.WriteLog(ELogError.ERROR, $"Error opening {_config.ProgramPath} with error : {openResult.Error}");
+            DeamonLogger.WriteLog(ELogError.ERROR, $"Error opening {_bpfConfig.ProgramPath} with error : {openResult.Error}");
             return false;
         }
 
@@ -102,6 +118,43 @@ internal class EbpfRuntime(EbpfConfiguration config) : IDisposable
         }
 
         DeamonLogger.WriteLog(ELogError.OK, "Bpf object successfully loaded.");
+
+        return true;
+    }
+
+    /// <summary>
+    /// Resolve & keep every map the deamon expects to find in the object.
+    /// </summary>
+    /// <returns>true if every expected map was found. false otherwise.</returns>
+    private bool LoadMaps()
+    {
+        if(_bpfObject == null)
+        {
+            DeamonLogger.WriteLog(ELogError.ERROR, "Bpf object not set.");
+            return false;
+        }
+
+        if(EbpfMaps.CommonMaps.Count == 0)
+        {
+            DeamonLogger.WriteLog(ELogError.WARNING, "No map declared in EbpfMaps...");
+            return true;
+        }
+
+        foreach(string mapName in EbpfMaps.CommonMaps)
+        {
+            var map = _bpfObject.FindMap(mapName);
+            if(map is null)
+            {
+                DeamonLogger.WriteLog(ELogError.ERROR, $"Map '{mapName}' not found in {_bpfConfig.ProgramPath}");
+                return false;
+            }
+
+            _bpfMaps[mapName] = map;
+
+            DeamonLogger.WriteLog(ELogError.OK, $"Map {mapName} found.");
+        }
+
+        DeamonLogger.WriteLog(ELogError.OK, $"{_bpfMaps.Count} map(s) resolved.");
 
         return true;
     }
@@ -154,29 +207,20 @@ internal class EbpfRuntime(EbpfConfiguration config) : IDisposable
     }
 
     /// <summary>
-    /// Create the ring buffer over the output map & start polling.
+    /// Resolve the ring buffer output map. Polling is not wired up yet.
     /// </summary>
     /// <returns>true if success. false if error occured.</returns>
     private bool LoadRingBuffer()
     {
-#if !DEBUG
-        return true;
-#endif
+        string ringBufferMapName = EbpfMaps.RingbufferMapName;
 
-        if(_bpfObject == null)
+        if(!_bpfMaps.TryGetValue(ringBufferMapName, out var map))
         {
-            DeamonLogger.WriteLog(ELogError.ERROR, "Bpf object not set.");
+            DeamonLogger.WriteLog(ELogError.ERROR, $"Map '{ringBufferMapName}' not resolved, declare it in EbpfMaps.CommonMaps.");
             return false;
         }
 
-        var map = _bpfObject.FindMap(RingBufferMapName);
-        if(map is null)
-        {
-            DeamonLogger.WriteLog(ELogError.ERROR, $"Map '{RingBufferMapName}' not found in {_config.ProgramPath}");
-            return false;
-        }
-
-        DeamonLogger.WriteLog(ELogError.OK, $"Ring buffer created over {RingBufferMapName}.");
+        DeamonLogger.WriteLog(ELogError.OK, $"Ring buffer map {ringBufferMapName} ready.");
 
         return true;
     }
@@ -187,12 +231,12 @@ internal class EbpfRuntime(EbpfConfiguration config) : IDisposable
     public void ShutDown() => Dispose();
 
     /// <summary>
-    /// Check if _config progPath is a valid .o file.
+    /// Check if _bpfConfig progPath is a valid .o file.
     /// </summary>
     /// <returns></returns>
     private bool IsValidProgFile()
     {
-        string progPath = _config.ProgramPath;
+        string progPath = _bpfConfig.ProgramPath;
 
         if(string.IsNullOrWhiteSpace(progPath))
             return false;
@@ -245,6 +289,7 @@ internal class EbpfRuntime(EbpfConfiguration config) : IDisposable
     private void CleanUpUnsafe()
     {
         CleanRingBuffer();
+        CleanBpfMaps();
         CleanBpfLinks();
         CleanBpfObject();
 
@@ -259,7 +304,22 @@ internal class EbpfRuntime(EbpfConfiguration config) : IDisposable
         _ringBuffer.Dispose();
         _ringBuffer = null;
 
-        DeamonLogger.WriteLog(ELogError.OK, $"Ring buffer over {RingBufferMapName} freed.");
+        DeamonLogger.WriteLog(ELogError.OK, "Ring buffer freed.");
+    }
+
+    /// <summary>
+    /// Maps are borrowed from the bpf object & freed by bpf_object__close, so
+    /// we only drop our references here.
+    /// </summary>
+    private void CleanBpfMaps()
+    {
+        if(_bpfMaps.Count == 0)
+            return;
+
+        int dropped = _bpfMaps.Count;
+        _bpfMaps.Clear();
+
+        DeamonLogger.WriteLog(ELogError.OK, $"{dropped} map reference(s) dropped.");
     }
 
     private void CleanBpfLinks()

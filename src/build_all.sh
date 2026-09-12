@@ -59,7 +59,4 @@ cp -a "./kernel/bin/." "$OUT_DIR/"
 echo "[*] Copying daemon..."
 cp -a "./Deamon/bin/Debug/$NET_FRAMEWORK/." "$OUT_DIR/"
 
-echo -ne "[*] Output files: \n"
-find "$OUT_DIR" -maxdepth 2 -type f
-
 echo -ne "\n\n[*] Done.\n"

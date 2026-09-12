@@ -11,7 +11,7 @@
 #include "../includes/bpf_common.h"
 #include "../data/bpf_events.h"
 #include "../data/bpf_ringbuf.h"
-#include "../lib/ft_utils.h"
+#include "../lib/ftlib.h"
 
 #define SIG_TEST 65
 

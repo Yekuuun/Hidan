@@ -7,7 +7,7 @@
 #ifndef BPF_COMMON_H
 #define BPF_COMMON_H
 
-#include "../includes/bpf_config.h"
+#include "bpf_config.h"
 
 /**
  * Nigthmares from Windows...

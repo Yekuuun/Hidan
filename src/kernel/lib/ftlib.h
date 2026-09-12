@@ -4,8 +4,8 @@
  * @author Yekuuun
  */
 
-#ifndef FT_UTILS_H
-#define FT_UTILS_H
+#ifndef FT_LIB_H
+#define FT_LIB_H
 
 #include "vmlinux.h"
 #include "../includes/bpf_config.h"
@@ -25,49 +25,46 @@ static __always_inline int ft_isdigit(int c){
 
 /**
  * Check if an str is a valid number.
+ * @max => borne max de lecture (doit être une constante connue à l'appel).
  */
-static __always_inline int ft_isnumeric(const char *s){
-    size_t i = 0;
-
-    #pragma unroll
-    while(*s++ != '\0'){
-        if(!ft_isdigit(*s))
+static __always_inline int ft_isnumeric(const char *s, __u32 max){
+    for (__u32 i = 0; i < max; i++) {
+        if (s[i] == '\0')
+            break;
+        if (!ft_isdigit((unsigned char)s[i]))
             return 0;
-
-        i++;
     }
-
     return 1;
 }
 
 /**
  * Homemade atoi.
+ * @max => borne max de lecture (doit être une constante connue à l'appel).
  */
-static __always_inline int ft_atoi(const char *s){
-    int i = 0, res = 0, sign = 1;
+static __always_inline int ft_atoi(const char *s, __u32 max){
+    __u32 i = 0;
+    int res = 0, sign = 1;
 
     if(!s)
         return 0;
 
-    #pragma unroll
-    while((s[i] >= 9 && s[i] <= 13) || s[i] == ' ')
+    while (i < max && ((s[i] >= 9 && s[i] <= 13) || s[i] == ' '))
         i++;
-    
-    if(s[i] == '-'){
+
+    if (i < max && s[i] == '-'){
         sign = -1;
         i++;
     }
 
-    if(s[i] == '+')
+    if (i < max && s[i] == '+')
         i++;
 
-    #pragma unroll
-    while(ft_isdigit(s[i])){
-        res = res * 10  + s[i] - '0';
+    while (i < max && ft_isdigit((unsigned char)s[i])){
+        res = res * 10 + (s[i] - '0');
         i++;
     }
 
-    return res;
+    return res * sign;
 }
 
 //----------------------------------------------------
@@ -80,25 +77,24 @@ static __always_inline int ft_atoi(const char *s){
  * strcmp - Compare two strings
  * @cs: One string
  * @ct: Another string
- * 
+ * @max: borne max de comparaison (doit être une constante connue à l'appel).
+ *
  * https://elixir.bootlin.com/linux/v6.17.3/source/drivers/firmware/efi/libstub/string.c#L68
  */
-static __always_inline int ft_strcmp(const char *cs, const char *ct)
+static __always_inline int ft_strcmp(const char *cs, const char *ct, __u32 max)
 {
-	unsigned char c1, c2;
+    for (__u32 i = 0; i < max; i++) {
+        unsigned char c1 = cs[i];
+        unsigned char c2 = ct[i];
 
-	while (1) {
-		c1 = *cs++;
-		c2 = *ct++;
+        if (c1 != c2)
+            return c1 < c2 ? -1 : 1;
 
-		if (c1 != c2)
-			return c1 < c2 ? -1 : 1;
+        if (!c1)
+            break;
+    }
 
-		if (!c1)
-			break;
-	}
-    
-	return 0;
+    return 0;
 }
 
 #endif

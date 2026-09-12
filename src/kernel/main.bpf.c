@@ -12,7 +12,7 @@
 #include "./data/bpf_ringbuf.h"
 
 //modules
-// #include "./modules/mod_hide_from.h"
+#include "./modules/mod_hide_from.h"
 #include "./modules/mod_test_evt.h"
 
 /**
