@@ -3,6 +3,7 @@ using Deamon.Logger;
 using Deamon.Ebpf.Abstraction;
 using Microsoft.Extensions.Configuration;
 using Deamon.Ebpf.Config;
+using Deamon.Ebpf.Utils;
 
 namespace Deamon.Ebpf.Runtime;
 
@@ -23,8 +24,8 @@ internal class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configura
 
     private BpfObject? _bpfObject = null;
     private readonly List<BpfLink> _bpfLinks = [];
-    private readonly Dictionary<string, BpfMap> _bpfMaps = [];
     private BpfRingBuffer? _ringBuffer = null;
+    private readonly Dictionary<string, BpfMap> _bpfMaps = [];
 
     private bool _disposed = false;
     #endregion
@@ -95,7 +96,7 @@ internal class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configura
     {
         DeamonLogger.WriteLog(ELogError.OK, "Loading object...");
 
-        if(!IsValidProgFile())
+        if(!EbpfUtils.IsValidProgFile(_bpfConfig.ProgramPath))
         {
             DeamonLogger.WriteLog(ELogError.ERROR, "Invalid ebpf object file.");
             return false;
@@ -229,27 +230,6 @@ internal class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configura
     /// Shutdown runtime.
     /// </summary>
     public void ShutDown() => Dispose();
-
-    /// <summary>
-    /// Check if _bpfConfig progPath is a valid .o file.
-    /// </summary>
-    /// <returns></returns>
-    private bool IsValidProgFile()
-    {
-        string progPath = _bpfConfig.ProgramPath;
-
-        if(string.IsNullOrWhiteSpace(progPath))
-            return false;
-
-        if(!File.Exists(progPath))
-            return false;
-
-        string ext = Path.GetExtension(progPath);
-        if(!string.Equals(ext, ".o", StringComparison.OrdinalIgnoreCase))
-            return false;
-
-        return true;
-    }
 
     #endregion
 
