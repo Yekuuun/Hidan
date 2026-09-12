@@ -10,7 +10,7 @@ namespace Deamon.Ebpf.Runtime;
 /// <summary>
 /// Global class encapsulating Ebpf runtime.
 /// </summary>
-internal class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configuration) : IDisposable
+internal partial class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configuration) : IDisposable
 {
     #region CONF
     private readonly EbpfConfiguration _bpfConfig  = bpfConfig;
@@ -24,7 +24,6 @@ internal class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configura
 
     private BpfObject? _bpfObject = null;
     private readonly List<BpfLink> _bpfLinks = [];
-    private BpfRingBuffer? _ringBuffer = null;
     private readonly Dictionary<string, BpfMap> _bpfMaps = [];
 
     private bool _disposed = false;
@@ -208,25 +207,6 @@ internal class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configura
     }
 
     /// <summary>
-    /// Resolve the ring buffer output map. Polling is not wired up yet.
-    /// </summary>
-    /// <returns>true if success. false if error occured.</returns>
-    private bool LoadRingBuffer()
-    {
-        string ringBufferMapName = EbpfMaps.RingbufferMapName;
-
-        if(!_bpfMaps.TryGetValue(ringBufferMapName, out var map))
-        {
-            DeamonLogger.WriteLog(ELogError.ERROR, $"Map '{ringBufferMapName}' not resolved, declare it in EbpfMaps.CommonMaps.");
-            return false;
-        }
-
-        DeamonLogger.WriteLog(ELogError.OK, $"Ring buffer map {ringBufferMapName} ready.");
-
-        return true;
-    }
-
-    /// <summary>
     /// Shutdown runtime.
     /// </summary>
     public void ShutDown() => Dispose();
@@ -274,17 +254,6 @@ internal class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configura
         CleanBpfObject();
 
         _state = EbpfState.Stopped;
-    }
-
-    private void CleanRingBuffer()
-    {
-        if(_ringBuffer is null)
-            return;
-
-        _ringBuffer.Dispose();
-        _ringBuffer = null;
-
-        DeamonLogger.WriteLog(ELogError.OK, "Ring buffer freed.");
     }
 
     /// <summary>
