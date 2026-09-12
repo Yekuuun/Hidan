@@ -39,11 +39,15 @@ internal partial class EbpfRuntime
     /// <returns>true if success. false if error occured.</returns>
     private bool LoadRingBuffer()
     {
+        if(_bpfObject is null)
+            return false;
+
         string ringBufferMapName = EbpfMaps.RingbufferMapName;
 
-        if(!_bpfMaps.TryGetValue(ringBufferMapName, out var map))
+        var map = _bpfObject.FindMap(ringBufferMapName);
+        if(map is null)
         {
-            DeamonLogger.WriteLog(ELogError.ERROR, $"Map '{ringBufferMapName}' not resolved, declare it in EbpfMaps.CommonMaps.");
+            DeamonLogger.WriteLog(ELogError.ERROR, $"Unable to find {ringBufferMapName} map.");
             return false;
         }
 

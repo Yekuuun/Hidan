@@ -46,8 +46,6 @@ internal partial class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration c
 
         try
         {
-            bool isDebug = _configuration.GetSection("GlobalConfig").GetValue<bool>("Debug");
-
             if(_state == EbpfState.Running)
             {
                 DeamonLogger.WriteLog(ELogError.WARNING, $"{_bpfConfig.ProgramName} already loaded, skipping.");
@@ -56,19 +54,10 @@ internal partial class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration c
 
             //maps are validated before attaching anything, so a mismatched .o
             //fails before we touch kernel state.
-            if(!LoadObject() || !LoadMaps() || !LoadPrograms())
+            if(!LoadObject() || !LoadMaps() || !LoadPrograms() || !LoadRingBuffer())
             {
                 CleanUpUnsafe();
                 return false;
-            }
-
-            if(isDebug)
-            {
-                if(!LoadRingBuffer())
-                {
-                    CleanUpUnsafe();
-                    return false;
-                }
             }
 
             _state = EbpfState.Running;
