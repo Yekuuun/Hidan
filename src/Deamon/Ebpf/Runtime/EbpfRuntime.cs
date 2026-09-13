@@ -3,13 +3,14 @@ using Deamon.Logger;
 using Deamon.Ebpf.Abstraction;
 using Microsoft.Extensions.Configuration;
 using Deamon.Ebpf.Config;
+using Deamon.Ebpf.Utils;
 
 namespace Deamon.Ebpf.Runtime;
 
 /// <summary>
 /// Global class encapsulating Ebpf runtime.
 /// </summary>
-internal class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configuration) : IDisposable
+internal partial class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configuration) : IEbpfRawEventSource, IDisposable
 {
     #region CONF
     private readonly EbpfConfiguration _bpfConfig  = bpfConfig;
@@ -24,7 +25,6 @@ internal class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configura
     private BpfObject? _bpfObject = null;
     private readonly List<BpfLink> _bpfLinks = [];
     private readonly Dictionary<string, BpfMap> _bpfMaps = [];
-    private BpfRingBuffer? _ringBuffer = null;
 
     private bool _disposed = false;
     #endregion
@@ -46,8 +46,6 @@ internal class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configura
 
         try
         {
-            bool isDebug = _configuration.GetSection("GlobalConfig").GetValue<bool>("Debug");
-
             if(_state == EbpfState.Running)
             {
                 DeamonLogger.WriteLog(ELogError.WARNING, $"{_bpfConfig.ProgramName} already loaded, skipping.");
@@ -56,19 +54,10 @@ internal class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configura
 
             //maps are validated before attaching anything, so a mismatched .o
             //fails before we touch kernel state.
-            if(!LoadObject() || !LoadMaps() || !LoadPrograms())
+            if(!LoadObject() || !LoadMaps() || !LoadPrograms() || !LoadRingBuffer())
             {
                 CleanUpUnsafe();
                 return false;
-            }
-
-            if(isDebug)
-            {
-                if(!LoadRingBuffer())
-                {
-                    CleanUpUnsafe();
-                    return false;
-                }
             }
 
             _state = EbpfState.Running;
@@ -95,7 +84,7 @@ internal class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configura
     {
         DeamonLogger.WriteLog(ELogError.OK, "Loading object...");
 
-        if(!IsValidProgFile())
+        if(!EbpfUtils.IsValidProgFile(_bpfConfig.ProgramPath))
         {
             DeamonLogger.WriteLog(ELogError.ERROR, "Invalid ebpf object file.");
             return false;
@@ -207,49 +196,9 @@ internal class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configura
     }
 
     /// <summary>
-    /// Resolve the ring buffer output map. Polling is not wired up yet.
-    /// </summary>
-    /// <returns>true if success. false if error occured.</returns>
-    private bool LoadRingBuffer()
-    {
-        string ringBufferMapName = EbpfMaps.RingbufferMapName;
-
-        if(!_bpfMaps.TryGetValue(ringBufferMapName, out var map))
-        {
-            DeamonLogger.WriteLog(ELogError.ERROR, $"Map '{ringBufferMapName}' not resolved, declare it in EbpfMaps.CommonMaps.");
-            return false;
-        }
-
-        DeamonLogger.WriteLog(ELogError.OK, $"Ring buffer map {ringBufferMapName} ready.");
-
-        return true;
-    }
-
-    /// <summary>
     /// Shutdown runtime.
     /// </summary>
     public void ShutDown() => Dispose();
-
-    /// <summary>
-    /// Check if _bpfConfig progPath is a valid .o file.
-    /// </summary>
-    /// <returns></returns>
-    private bool IsValidProgFile()
-    {
-        string progPath = _bpfConfig.ProgramPath;
-
-        if(string.IsNullOrWhiteSpace(progPath))
-            return false;
-
-        if(!File.Exists(progPath))
-            return false;
-
-        string ext = Path.GetExtension(progPath);
-        if(!string.Equals(ext, ".o", StringComparison.OrdinalIgnoreCase))
-            return false;
-
-        return true;
-    }
 
     #endregion
 
@@ -294,17 +243,6 @@ internal class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configura
         CleanBpfObject();
 
         _state = EbpfState.Stopped;
-    }
-
-    private void CleanRingBuffer()
-    {
-        if(_ringBuffer is null)
-            return;
-
-        _ringBuffer.Dispose();
-        _ringBuffer = null;
-
-        DeamonLogger.WriteLog(ELogError.OK, "Ring buffer freed.");
     }
 
     /// <summary>

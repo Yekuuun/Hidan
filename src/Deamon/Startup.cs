@@ -1,7 +1,10 @@
 ﻿using Deamon.Config;
 using Deamon.Ebpf;
+using Deamon.Gui;
 using Deamon.Logger;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Deamon;
 
@@ -16,6 +19,14 @@ internal class Program
             ebpfConfiguration: new EbpfConfiguration(){ ProgramName = "Hidan", ProgramPath = Path.Combine(AppContext.BaseDirectory, "main.bpf.o") },
             configuration:builder.Configuration.GetSection("Ebpf")
         );
+
+        //the terminal UI owns the console : anything else writing to stdout
+        //scribbles over it, so the default console providers go.
+        builder.Logging.ClearProviders();
+
+        //registered after AddEbpf : hosted services start in order, so the
+        //ring buffer exists before the UI starts draining it.
+        builder.Services.AddHostedService<TerminalGuiService>();
 
         using var host = builder.Build();
 

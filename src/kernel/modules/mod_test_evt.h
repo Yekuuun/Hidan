@@ -13,23 +13,15 @@
 #include "../data/bpf_ringbuf.h"
 #include "../lib/ftlib.h"
 
-#define SIG_TEST 65
+#define SIG_TEST 60
 
 /**
- * Kprobe on sys_kill for easy debugging.
+ * Kprobe on sys_kill for easy debugging => sending EBPF rinbuffer event on kill -60 <pid> event.
  */
 SEC("kprobe/__x64_sys_kill")
 int BPF_KPROBE(kprobe_sys_kill, struct pt_regs *regs)
 {
-    /**
-     * 2 interesting infos to get : 
-     * 
-     * dx => pid_t pid
-     * si => signal sendt
-     */
-    __u32 pid  = (__u32)PT_REGS_PARM1_CORE(regs);
     __u32 sig  = (__u32)PT_REGS_PARM2_CORE(regs);
-
 
     //only handle dedicated signal for testing.
     if(sig != SIG_TEST)

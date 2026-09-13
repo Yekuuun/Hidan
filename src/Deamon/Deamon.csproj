@@ -8,10 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Mango.Libbpf" Version="0.0.3" />
+    <PackageReference Include="Mango.Libbpf" Version="0.0.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.12" />
+    <PackageReference Include="Terminal.Gui" Version="2.5.0" />
   </ItemGroup>
 
 </Project>

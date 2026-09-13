@@ -1,1 +1,0 @@
-namespace Deamon.Ebpf.EventLogger;

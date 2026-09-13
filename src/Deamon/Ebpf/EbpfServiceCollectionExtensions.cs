@@ -1,3 +1,6 @@
+using Deamon.Ebpf.Abstraction;
+using Deamon.Ebpf.Debug;
+using Deamon.Ebpf.Events;
 using Deamon.Ebpf.Runtime;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,10 +19,17 @@ public static class EbpfServiceCollectionExtensions
         //inject config.
         services.AddSingleton(ebpfConfiguration);
         services.AddSingleton(configuration);
-
+ 
         services.AddSingleton<EbpfRuntime>();
+ 
+        //same instance behind the interface, or the reader would listen to a
+        services.AddSingleton<IEbpfRawEventSource>(sp => (IEbpfRawEventSource)sp.GetRequiredService<EbpfRuntime>());
+ 
+        services.AddSingleton<IEbpfEventReader, EbpfEventReader>();
+ 
+        //order matters : the lifecycle service must create the ring buffer
+        //before the logger starts draining it.
         services.AddHostedService<EbpfLifecycleService>();
-
         return services;
     }
 }
