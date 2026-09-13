@@ -1,4 +1,5 @@
 using Deamon.Ebpf.Abstraction;
+using Deamon.Ebpf.Debug;
 using Deamon.Ebpf.Events;
 using Deamon.Ebpf.Runtime;
 using Microsoft.Extensions.Configuration;
@@ -29,7 +30,6 @@ public static class EbpfServiceCollectionExtensions
         //order matters : the lifecycle service must create the ring buffer
         //before the logger starts draining it.
         services.AddHostedService<EbpfLifecycleService>();
- 
         return services;
     }
 }

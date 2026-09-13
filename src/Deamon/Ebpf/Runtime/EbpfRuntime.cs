@@ -10,7 +10,7 @@ namespace Deamon.Ebpf.Runtime;
 /// <summary>
 /// Global class encapsulating Ebpf runtime.
 /// </summary>
-internal partial class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configuration) : IDisposable
+internal partial class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configuration) : IEbpfRawEventSource, IDisposable
 {
     #region CONF
     private readonly EbpfConfiguration _bpfConfig  = bpfConfig;

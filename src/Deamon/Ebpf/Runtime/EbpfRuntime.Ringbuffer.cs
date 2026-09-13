@@ -12,6 +12,9 @@ internal partial class EbpfRuntime
 {
     #region RINGBUFFER_CONFIG
 
+    //libbpf reports -EINTR when a signal lands during the poll.
+    private const int LibbpfEintr = -4;
+
     private BpfRingBuffer? _ringBuffer = null;
     private readonly Channel<byte[]> _rawEvents = Channel.CreateBounded<byte[]>(new BoundedChannelOptions(8192)
     {
@@ -20,7 +23,6 @@ internal partial class EbpfRuntime
         SingleReader = false
     });
 
-    private Action<ReadOnlySpan<byte>>? _onEventCallback = null;
     private Thread? _pollThread = null;
     private CancellationTokenSource? _pollCts = null;
 
@@ -34,7 +36,7 @@ internal partial class EbpfRuntime
     public IAsyncEnumerable<byte[]> ReadRawAsync(CancellationToken cancellationToken = default) => _rawEvents.Reader.ReadAllAsync(cancellationToken);
 
     /// <summary>
-    /// Resolve the ring buffer output map. Polling is not wired up yet.
+    /// Resolve the ring buffer output map & start consuming it.
     /// </summary>
     /// <returns>true if success. false if error occured.</returns>
     private bool LoadRingBuffer()
@@ -53,8 +55,9 @@ internal partial class EbpfRuntime
 
         DeamonLogger.WriteLog(ELogError.OK, $"Ring buffer map {ringBufferMapName} ready.");
 
-        _onEventCallback = OnEvent;
-        var result = BpfRingBuffer.Create(map, _onEventCallback);
+        //Mango.Libbpf >= 0.0.4 roots the native callback for the manager's
+        //lifetime : keeping _ringBuffer alive is enough to keep it alive.
+        var result = BpfRingBuffer.Create(map, OnEvent);
         if(!result.IsSuccess)
         {
             DeamonLogger.WriteLog(ELogError.ERROR, $"Unable to create ring buffer : {result.Error}");
@@ -65,7 +68,7 @@ internal partial class EbpfRuntime
 
         StartPolling();
 
-        DeamonLogger.WriteLog(ELogError.OK, $"Ring buffer polling {EbpfMaps.RingbufferMapName}.");
+        DeamonLogger.WriteLog(ELogError.OK, $"Ring buffer polling {ringBufferMapName}.");
 
         return true;
     }
@@ -79,14 +82,28 @@ internal partial class EbpfRuntime
             return;
 
         _pollCts  = new();
+
         var token = _pollCts.Token;
+
+        //captured : the field is cleared on cleanup, and cleanup only runs
+        //once this thread has joined.
+        var ringBuffer = _ringBuffer;
 
         _pollThread = new Thread(() =>
         {
             try
             {
                 while(!token.IsCancellationRequested)
-                    _ringBuffer.Poll(timeoutMs:200);
+                {
+                    int result = ringBuffer.Poll(timeoutMs: 200);
+
+                    //a signal during the poll is not a failure.
+                    if(result < 0 && result != LibbpfEintr)
+                    {
+                        DeamonLogger.WriteLog(ELogError.ERROR, $"Polling stopped, ring_buffer__poll returned {result}.");
+                        break;
+                    }
+                }
             }
             catch(Exception ex)
             {
@@ -121,26 +138,40 @@ internal partial class EbpfRuntime
         }
     }
 
+    /// <summary>
+    /// Invoked by libbpf on the poll thread for each record. Mango catches
+    /// anything thrown here & writes it to stderr, which would scribble over
+    /// the terminal UI : nothing is allowed to leave this frame.
+    /// </summary>
+    /// <param name="data">only valid for the duration of this call.</param>
     private void OnEvent(ReadOnlySpan<byte> data)
     {
         try
         {
-            var copy = data.ToArray();
-            _rawEvents.Writer.TryWrite(copy);
+            _rawEvents.Writer.TryWrite(data.ToArray());
         }
         catch(Exception ex)
         {
-            DeamonLogger.WriteLog(ELogError.ERROR, $"Error queuing record : {ex.Message}");
+            try
+            {
+                DeamonLogger.WriteLog(ELogError.ERROR, $"Error queuing record : {ex.Message}");
+            }
+            catch
+            {
+                //the logger is the last thing left to fail : swallow it.
+            }
         }
     }
 
     #endregion
 
     #region CLEANUP
+
     private void CleanRingBuffer()
     {
         _rawEvents.Writer.TryComplete();
 
+        //disposing under a live poll would pull the handle out from under it.
         if(!StopPolling())
         {
             DeamonLogger.WriteLog(ELogError.WARNING, "Ring buffer left allocated, poll thread still alive.");
@@ -152,7 +183,6 @@ internal partial class EbpfRuntime
 
         _ringBuffer.Dispose();
         _ringBuffer = null;
-        _onEventCallback = null;
 
         DeamonLogger.WriteLog(ELogError.OK, "Ring buffer freed.");
     }
