@@ -2,7 +2,7 @@ using Deamon.Ebpf.Abstraction;
 using Deamon.Logger;
 using Microsoft.Extensions.Hosting;
 
-namespace Deamon.Gui;
+namespace Deamon.Gui.Service;
 
 /// <summary>
 /// Hosts <see cref="TerminalGui"/> for the lifetime of the app. Terminal.Gui
@@ -15,7 +15,7 @@ internal sealed class TerminalGuiService(IEbpfEventReader reader, IHostApplicati
     {
         var uiExited = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        var uiThread = new Thread(() => RunUi(stoppingToken, uiExited))
+        var uiThread = new Thread(() => RunUi(uiExited, stoppingToken))
         {
             Name = "hidan-ui",
             IsBackground = true
@@ -26,7 +26,7 @@ internal sealed class TerminalGuiService(IEbpfEventReader reader, IHostApplicati
         return uiExited.Task;
     }
 
-    private void RunUi(CancellationToken stoppingToken, TaskCompletionSource uiExited)
+    private void RunUi(TaskCompletionSource uiExited, CancellationToken stoppingToken)
     {
         var gui = new TerminalGui(reader);
         gui.QuitRequested += lifetime.StopApplication;

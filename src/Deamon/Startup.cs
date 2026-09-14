@@ -1,7 +1,7 @@
 ﻿using Deamon.Config;
 using Deamon.Ebpf;
-using Deamon.Gui;
 using Deamon.Logger;
+using Deamon.Gui.Service;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
