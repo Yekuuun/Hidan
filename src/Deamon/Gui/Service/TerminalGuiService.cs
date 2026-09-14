@@ -9,7 +9,7 @@ namespace Deamon.Gui.Service;
 /// needs a thread of its own : a pooled thread blocked for hours is not one,
 /// so the UI gets a dedicated thread & ExecuteAsync just waits on it.
 /// </summary>
-internal sealed class TerminalGuiService(IEbpfEventReader reader, IHostApplicationLifetime lifetime) : BackgroundService
+internal sealed class TerminalGuiService(IEbpfEventReader reader, IEbpfMapActions mapActions, IHostApplicationLifetime lifetime) : BackgroundService
 {
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -28,7 +28,7 @@ internal sealed class TerminalGuiService(IEbpfEventReader reader, IHostApplicati
 
     private void RunUi(TaskCompletionSource uiExited, CancellationToken stoppingToken)
     {
-        var gui = new TerminalGui(reader);
+        var gui = new TerminalGui(reader, mapActions);
         gui.QuitRequested += lifetime.StopApplication;
         DeamonLogger.SetSink((level, msg) => gui.Write($"[{level}] {msg}"));
 

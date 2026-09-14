@@ -3,7 +3,7 @@ using Deamon.Gui.Abstraction;
 
 namespace Deamon.Cmd.Commands;
 
-internal sealed class QuidCommand(IAppLifeCycle lifeCycle) : ICmdCommand
+internal sealed class QuitCommand(IAppLifeCycle lifeCycle) : ICmdCommand
 {
     private readonly IAppLifeCycle _lifeCycle = lifeCycle;
 

@@ -24,7 +24,8 @@ public static class EbpfServiceCollectionExtensions
  
         //same instance behind the interface, or the reader would listen to a
         services.AddSingleton<IEbpfRawEventSource>(sp => (IEbpfRawEventSource)sp.GetRequiredService<EbpfRuntime>());
- 
+        services.AddSingleton<IEbpfMapActions>(sp => (IEbpfMapActions)sp.GetRequiredService<EbpfRuntime>());
+
         services.AddSingleton<IEbpfEventReader, EbpfEventReader>();
  
         //order matters : the lifecycle service must create the ring buffer

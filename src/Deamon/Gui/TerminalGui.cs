@@ -13,10 +13,11 @@ namespace Deamon.Gui;
 /// input at the bottom. Owns the UI thread ; the event stream is drained on a
 /// background task & marshalled in via Application.Invoke.
 /// </summary>
-internal partial class TerminalGui(IEbpfEventReader reader) : IAppLifeCycle, IOutputCommand
+internal partial class TerminalGui(IEbpfEventReader reader, IEbpfMapActions mapActions) : IAppLifeCycle, IOutputCommand
 {
     private readonly CommandRegistry _cmdRegister = new();
-    private readonly IEbpfEventReader _reader = reader;
+    private readonly IEbpfEventReader _reader  = reader;
+    private readonly IEbpfMapActions  _mapActions = mapActions;
     private IApplication? _app;
 
     //raised when the user asks to quit ; lets Main stop the host cleanly.
@@ -62,6 +63,7 @@ internal partial class TerminalGui(IEbpfEventReader reader) : IAppLifeCycle, IOu
     /// </summary>
     private void ConfigureCommandRegistry()
     {
-        _cmdRegister.RegisterCommand(new QuidCommand(this), "quit", "leave");
+        _cmdRegister.RegisterCommand(new QuitCommand(this), "quit", "leave");
+        _cmdRegister.RegisterCommand(new MapCommand(_mapActions, this), "maps");
     }
 }
