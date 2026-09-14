@@ -8,7 +8,7 @@ namespace Deamon.Gui;
 /// </summary>
 internal partial class TerminalGui
 {
-        //buffered between UI ticks so we do one Invoke per tick, not per event.
+    //buffered between UI ticks so we do one Invoke per tick, not per event.
     private readonly ConcurrentQueue<string> _pending = new();
     private readonly ObservableCollection<string> _lines = [];
 
@@ -69,17 +69,15 @@ internal partial class TerminalGui
 
     #region CMD
 
-    public void RequestQuit()
+    public void WriteOutput(string line) => Enqueue(line);
+
+    public void Clear()
     {
-        QuitRequested?.Invoke();
-        _app?.RequestStop();
+        while(_pending.TryDequeue(out _)){}
+        _lines.Clear();
     }
 
-    public void WriteOutput(string line) => Write(line);
-
-    public void Clear() => _lines.Clear();
-
-    private void HandleCommand(string command) => _cmdRegister.TryExecute(command, this);
+    private void HandleCommand(string command) => _registry.TryExecute(command, this);
 
     #endregion
 }

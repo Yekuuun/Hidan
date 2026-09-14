@@ -5,19 +5,9 @@ using Deamon.Gui.Abstraction;
 
 namespace Deamon.Cmd;
 
-internal sealed class CommandRegistry
+internal sealed class CommandRegistry(IEnumerable<ICmdCommand> commands)
 {
-    private readonly Dictionary<string, ICmdCommand> _commands = new(StringComparer.OrdinalIgnoreCase);
-
-    public void RegisterCommand(ICmdCommand command, params string[] aliases)
-    {
-        _commands[command.Name] = command;
-
-        foreach(var alias in aliases)
-            _commands[alias] = command;
-    }
-
-    public IReadOnlyCollection<ICmdCommand> GetAll() => _commands.Values;
+    private readonly Dictionary<string, ICmdCommand> _commands = commands.ToDictionary(c => c.Name, StringComparer.OrdinalIgnoreCase);
 
     public void TryExecute(string rawInput, IOutputCommand output)
     {
@@ -36,7 +26,7 @@ internal sealed class CommandRegistry
 
         try
         {
-            command.Execute(args);
+            command.Execute(args, output);
         }
         catch(Exception ex)
         {
@@ -44,6 +34,11 @@ internal sealed class CommandRegistry
         }
     }
 
+    /// <summary>
+    /// tokenize raw user input from HandleCommandLine in TerminalGui
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns></returns>
     private static string[] Tokenize(string input)
     {
         var tokens = new List<string>();
