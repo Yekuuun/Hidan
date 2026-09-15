@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Deamon.Cmd.Abstraction;
 using Deamon.Ebpf.Abstraction;
 using Deamon.Gui.Abstraction;
@@ -10,6 +11,8 @@ internal sealed class MapCommand(IEbpfMapActions actions) : ICmdCommand
     public string Name => "map";
 
     public string Description => "Maps interaction commands.";
+
+    public ReadOnlyCollection<string> Aliases => [];
     #endregion
 
     /// <summary>

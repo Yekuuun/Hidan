@@ -2,12 +2,25 @@ using System.Text;
 using System.Windows.Input;
 using Deamon.Cmd.Abstraction;
 using Deamon.Gui.Abstraction;
+using Terminal.Gui.Input;
 
 namespace Deamon.Cmd;
 
-internal sealed class CommandRegistry(IEnumerable<ICmdCommand> commands)
+internal sealed class CommandRegistry
 {
-    private readonly Dictionary<string, ICmdCommand> _commands = commands.ToDictionary(c => c.Name, StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, ICmdCommand> _commands = [];
+
+    public CommandRegistry(IEnumerable<ICmdCommand> commands)
+    {
+        foreach(var c in commands)
+        {
+            _commands[c.Name] = c;
+
+            if(c.Aliases.Count != 0)
+                foreach(string alias in c.Aliases)
+                    _commands[alias] = c;
+        }
+    }
 
     public void TryExecute(string rawInput, IOutputCommand output)
     {

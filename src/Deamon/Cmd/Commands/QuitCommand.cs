@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Deamon.Cmd.Abstraction;
 using Deamon.Gui.Abstraction;
 using Microsoft.Extensions.Hosting;
@@ -8,6 +9,7 @@ internal sealed class QuitCommand(IHostApplicationLifetime lifetime) : ICmdComma
 {
     public string Name => "quit";
     public string Description => "Quit Hidan Deamon application.";
+    public ReadOnlyCollection<string> Aliases => ["exit", "leave"];
 
     public void Execute(string[] args, IOutputCommand output) => lifetime.StopApplication();
 }
