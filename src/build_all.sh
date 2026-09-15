@@ -5,10 +5,6 @@ MAIN_BPF_O="main.bpf.o"
 DEAMON="Deamon"
 NET_FRAMEWORK="net10.0"
 
-# -----------------------------------------
-# Functions
-# -----------------------------------------
-
 create_out_dir() {
     mkdir -p "$OUT_DIR"
 }
