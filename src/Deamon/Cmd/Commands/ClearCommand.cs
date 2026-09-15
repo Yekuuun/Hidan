@@ -1,16 +1,14 @@
-using System.Collections.ObjectModel;
+using System.CommandLine;
 using Deamon.Cmd.Abstraction;
 using Deamon.Gui.Abstraction;
 
 namespace Deamon.Cmd.Commands;
 
-internal sealed class ClearCommand : ICmdCommand
+internal sealed class ClearCommand : CliCommandBase
 {
-    public string Name => "clear";
+    public override string Name => "clear";
 
-    public string Description => "Clear terminal entries";
+    public override string Description => "Clear terminal entries";
 
-    public ReadOnlyCollection<string> Aliases => [];
-
-    public void Execute(string[] args, IOutputCommand output) => output.Clear();
+    protected override void Configure(Command command, IOutputCommand output) => command.SetAction(_ => output.Clear());
 }

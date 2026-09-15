@@ -1,38 +1,51 @@
 using System.Collections.ObjectModel;
+using System.CommandLine;
 using Deamon.Cmd.Abstraction;
 using Deamon.Ebpf.Abstraction;
 using Deamon.Gui.Abstraction;
 
 namespace Deamon.Cmd.Commands;
 
-internal sealed class MapCommand(IEbpfMapActions actions) : ICmdCommand
+internal sealed class MapCommand(IEbpfMapActions actions) : CliCommandBase
 {
-    #region CONFIG
-    public string Name => "map";
+    public override string Name => "maps";
 
-    public string Description => "Maps interaction commands.";
+    public override string Description => "Inspect & edit loaded eBPF maps.";
 
-    public ReadOnlyCollection<string> Aliases => [];
-    #endregion
+    protected override void Configure(Command command, IOutputCommand output)
+    {
+        command.Subcommands.Add(BuildList(output));
+    }
+
+    #region SUB_COMMANDS
 
     /// <summary>
-    /// TO DO : 
-    /// 
-    /// UPGRADE CLASS to handle multi arguments type commands (--list, --add <map_id> <new_value>, etc.)
+    /// Build map list command base utility
     /// </summary>
-    /// <param name="args"></param>
-    /// <exception cref="NotImplementedException"></exception>
-    public void Execute(string[] args, IOutputCommand output)
+    /// <param name="output"></param>
+    /// <returns></returns>
+    private Command BuildList(IOutputCommand output)
+    {
+        var list = new Command("list", "List every loaded map.");
+
+        list.SetAction(_ => ListAllMaps(output));
+
+        return list;
+    }
+
+    #endregion
+
+    private void ListAllMaps(IOutputCommand output)
     {
         List<MapDto> maps = actions.ListAllMaps();
-        if(maps.Count == 0)
+        if (maps.Count == 0)
         {
             output.WriteOutput("No maps loaded. Inspect loaded program using bpftool.");
         }
         else
         {
             output.WriteOutput("Loaded maps informations : ");
-            foreach(MapDto map in maps)
+            foreach (MapDto map in maps)
             {
                 output.WriteOutput($"Name : {map.Name}, FD : {map.Fd}, Max entries : {map.MaxEntries}, Type : {map.MapType.ToString()}");
             }
