@@ -7,6 +7,7 @@ namespace Deamon.Ebpf.Runtime;
 /// </summary>
 internal partial class EbpfRuntime
 {
+    #region ACTIONS_MAPS
     /// <summary>
     /// list all avalaible loaded maps & return MapDto object list.
     /// </summary>
@@ -41,4 +42,40 @@ internal partial class EbpfRuntime
 
         return result;
     }
+
+    /// <summary>
+    /// Try getting a single map using it's unique name.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    public MapDto? TryGetMap(string name)
+    {
+        if(string.IsNullOrEmpty(name))
+            return null;
+
+        BpfMap? map = null;
+
+        if(_state != Abstraction.EbpfState.Running)
+            return null;
+
+        if(_bpfMaps.Keys.Count == 0)
+            return null;
+
+        bool found = _bpfMaps.TryGetValue(name, out map);
+
+        if(!found || map == null)
+            return null;
+
+        return new MapDto()
+        {
+            Name = map.Name,
+            Fd   = map.Fd,
+            MapType = map.Type,
+            KeySize = map.KeySize,
+            ValueSize = map.ValueSize,
+            MaxEntries = map.MaxEntries
+        };
+    }
+
+    #endregion
 }
