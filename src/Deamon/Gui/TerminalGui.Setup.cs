@@ -8,40 +8,45 @@ namespace Deamon.Gui;
 internal partial class TerminalGui
 {
     private const int MaxLines = 2000;
-    private ListView _logView = null!;
+
+    //left : whatever a command answered. right : the ring buffer stream.
+    private TerminalLogPane _console = null!;
+    private TerminalLogPane _events = null!;
     private TextField _input = null!;
 
-    private Window BuildUi()
+    private Window BuildTerminalGui()
     {
         var win = new Window
         {
             X = 0, Y = 0,
             Width = Dim.Fill(),
             Height = Dim.Fill(),
-            Title = "Hidan — events (type 'quit' to exit)"
+            Title = "Hidan (type 'quit' to exit)"
         };
 
-        var logFrame = new FrameView
-        {
-            X = 0, Y = 0,
-            Width = Dim.Fill(),
-            Height = Dim.Fill()! - 3,
-            Title = "events"
-        };
+        //both panes stop 3 rows short of the bottom : that is the prompt.
+        _console = new TerminalLogPane(
+            title: "console",
+            maxLines: MaxLines,
+            x: 0, y: 0,
+            width: Dim.Percent(65),
+            height: Dim.Fill()! - 3
+        );
 
-        _logView = new ListView
-        {
-            X = 0, Y = 0,
-            Width = Dim.Fill(),
-            Height = Dim.Fill()
-        };
-        _logView.SetSource(_lines);
-        logFrame.Add(_logView);
+        _events = new TerminalLogPane(
+            title: "events",
+            maxLines: MaxLines,
+            x: Pos.Right(_console.Frame), y: 0,
+            width: Dim.Fill(),
+            height: Dim.Fill()! - 3
+        );
+        
+        //-----------------------------------------------------------------
 
         var promptFrame = new FrameView
         {
             X = 0,
-            Y = Pos.Bottom(logFrame),
+            Y = Pos.Bottom(_console.Frame),
             Width = Dim.Fill(),
             Height = 3,
             Title = "command"
@@ -56,22 +61,10 @@ internal partial class TerminalGui
         _input.KeyDown += OnInputKey;
         promptFrame.Add(_input);
 
-        win.Add(logFrame, promptFrame);
+        win.Add(_console.Frame, _events.Frame, promptFrame);
 
         _input.SetFocus();
 
         return win;
-    }
-
-    private void OnInputKey(object? sender, Key e)
-    {
-        if(e != Key.Enter)
-            return;
-
-        string line = _input.Text?.ToString() ?? string.Empty;
-        _input.Text = string.Empty;
-        e.Handled = true;
-
-        HandleCommand(line.Trim());
     }
 }

@@ -1,5 +1,6 @@
-using System.Collections.Concurrent;
-using System.Collections.ObjectModel;
+using Deamon.Gui.Abstraction;
+using Deamon.Gui.Config;
+using Terminal.Gui.Input;
 
 namespace Deamon.Gui;
 
@@ -8,10 +9,6 @@ namespace Deamon.Gui;
 /// </summary>
 internal partial class TerminalGui
 {
-    //buffered between UI ticks so we do one Invoke per tick, not per event.
-    private readonly ConcurrentQueue<string> _pending = new();
-    private readonly ObservableCollection<string> _lines = [];
-
     #region EVENTS
 
     private async Task ConsumeAsync(CancellationToken stoppingToken)
@@ -20,7 +17,7 @@ internal partial class TerminalGui
         {
             await foreach(var evt in _reader.ReadAsync(stoppingToken))
             {
-                Write($"{evt}");
+                WriteEvent($"{evt}");
             }
         }
         catch(OperationCanceledException)
@@ -29,38 +26,28 @@ internal partial class TerminalGui
         }
         catch(Exception ex)
         {
-            Write($"reader stopped : {ex.Message}");
+            WriteEvent($"reader stopped : {ex.Message}");
         }
     }
 
     /// <summary>
-    /// Pushes a line into the events pane. Safe to call from any thread.
+    /// Pushes a line into the ring buffer pane. Safe to call from any thread.
     /// </summary>
-    /// <param name="line"></param>
-    public void Write(string line) => Enqueue($"{DateTime.Now:HH:mm:ss}  {line}");
+    private void WriteEvent(string line) => _events.Enqueue(Stamp(line));
 
-    //called from the background task : only touches the concurrent queue.
-    private void Enqueue(string line) => _pending.Enqueue(line);
+    /// <summary>
+    /// Pushes a line into the console pane : app level messages, the logger
+    /// sink included. Safe to call from any thread.
+    /// </summary>
+    public void Write(string line) => _console.Enqueue(Stamp(line));
+
+    private static string Stamp(string line) => $"{DateTime.Now:HH:mm:ss}  {line}";
 
     //runs on the UI thread via the timer : safe to touch the views here.
     private bool FlushPending()
     {
-        bool changed = false;
-
-        while(_pending.TryDequeue(out var line))
-        {
-            _lines.Add(line);
-            changed = true;
-        }
-
-        if(!changed)
-            return true;
-
-        //ObservableCollection has no RemoveRange : trim the head one by one.
-        while(_lines.Count > MaxLines)
-            _lines.RemoveAt(0);
-
-        _logView.SelectedItem = _lines.Count - 1;
+        _console.Flush();
+        _events.Flush();
 
         return true;
     }
@@ -69,15 +56,32 @@ internal partial class TerminalGui
 
     #region CMD
 
-    public void WriteOutput(string line) => Enqueue(line);
+    //command output is already the answer to something the user typed : no
+    //timestamp, it would only push the text right.
+    public void WriteOutput(string line) => _console.Enqueue(line);
 
-    public void Clear()
+    public void Clear(EOutputPane pane)
     {
-        while(_pending.TryDequeue(out _)){}
-        _lines.Clear();
+        if(pane is EOutputPane.Command or EOutputPane.Both)
+            _console.Clear();
+
+        if(pane is EOutputPane.Events or EOutputPane.Both)
+            _events.Clear();
     }
 
     private void HandleCommand(string command) => _registry.TryExecute(command, this);
+
+    private void OnInputKey(object? sender, Key e)
+    {
+        if(e != Key.Enter)
+            return;
+
+        string line = _input.Text?.ToString() ?? string.Empty;
+        _input.Text = string.Empty;
+        e.Handled = true;
+
+        HandleCommand(line.Trim());
+    }
 
     #endregion
 }

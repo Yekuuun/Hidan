@@ -31,7 +31,7 @@ internal partial class TerminalGui(IEbpfEventReader reader, CommandRegistry regi
         try
         {
             //a runnable handed to Run is ours to dispose.
-            using var win = BuildUi();
+            using var win = BuildTerminalGui();
 
             //drain the reader off the UI thread.
             _ = Task.Run(() => ConsumeAsync(stoppingToken), stoppingToken);
