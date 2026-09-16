@@ -1,7 +1,9 @@
 using System.Threading.Channels;
+using Deamon.Ebpf.Abstraction;
 using Deamon.Ebpf.Config;
 using Deamon.Logger;
 using Mango;
+using Mango.Interops;
 
 namespace Deamon.Ebpf.Runtime;
 
@@ -44,31 +46,40 @@ internal partial class EbpfRuntime
         if(_bpfObject is null)
             return false;
 
-        string ringBufferMapName = EbpfMaps.RingbufferMapName;
 
-        var map = _bpfObject.FindMap(ringBufferMapName);
-        if(map is null)
+        foreach(KeyValuePair<string, IEbpfMapConfig> mapConfig in _tmpMapsInit)
         {
-            DeamonLogger.WriteLog(ELogError.ERROR, $"Unable to find {ringBufferMapName} map.");
-            return false;
+            string mapName = mapConfig.Key;
+            var conf = mapConfig.Value;
+
+            if(conf.MapType != BpfMapType.Ringbuf)
+                continue;
+
+            var map = _bpfObject.FindMap(mapName);
+            if(map is null)
+            {
+                DeamonLogger.WriteLog(ELogError.ERROR, $"Unable to find {mapName} map.");
+                return false;
+            }
+
+            DeamonLogger.WriteLog(ELogError.OK, $"Ring buffer map {mapName} ready.");
+
+            //Mango.Libbpf >= 0.0.4 roots the native callback for the manager's
+            //lifetime : keeping _ringBuffer alive is enough to keep it alive.
+            var result = BpfRingBuffer.Create(map, OnEvent);
+            if(!result.IsSuccess)
+            {
+                DeamonLogger.WriteLog(ELogError.ERROR, $"Unable to create ring buffer : {result.Error}");
+                return false;
+            }
+
+            _ringBuffer = result.Value!;
+
+            StartPolling();
+
+            DeamonLogger.WriteLog(ELogError.OK, $"Ring buffer polling {mapName}.");
+
         }
-
-        DeamonLogger.WriteLog(ELogError.OK, $"Ring buffer map {ringBufferMapName} ready.");
-
-        //Mango.Libbpf >= 0.0.4 roots the native callback for the manager's
-        //lifetime : keeping _ringBuffer alive is enough to keep it alive.
-        var result = BpfRingBuffer.Create(map, OnEvent);
-        if(!result.IsSuccess)
-        {
-            DeamonLogger.WriteLog(ELogError.ERROR, $"Unable to create ring buffer : {result.Error}");
-            return false;
-        }
-
-        _ringBuffer = result.Value!;
-
-        StartPolling();
-
-        DeamonLogger.WriteLog(ELogError.OK, $"Ring buffer polling {ringBufferMapName}.");
 
         return true;
     }

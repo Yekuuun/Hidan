@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace Deamon.Ebpf.Utils;
 
 internal static class EbpfUtils
@@ -20,4 +22,12 @@ internal static class EbpfUtils
 
         return true;
     }
+
+    /// <summary>
+    /// Converts any blittable value to its raw map bytes.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public static byte[] ToBytes<T>(T value) where T : unmanaged => MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref value, 1)).ToArray();
 }

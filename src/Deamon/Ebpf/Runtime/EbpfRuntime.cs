@@ -4,19 +4,20 @@ using Deamon.Ebpf.Abstraction;
 using Microsoft.Extensions.Configuration;
 using Deamon.Ebpf.Config;
 using Deamon.Ebpf.Utils;
+using Deamon.Ebpf.Mapping;
+using Mango.Interops;
 
 namespace Deamon.Ebpf.Runtime;
 
 /// <summary>
 /// Global class encapsulating Ebpf runtime.
 /// </summary>
-internal partial class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configuration) : IEbpfRawEventSource, IEbpfMapActions, IDisposable
+internal partial class EbpfRuntime : IEbpfRawEventSource, IEbpfMapActions, IDisposable
 {
     #region CONF
-    private readonly EbpfConfiguration _bpfConfig  = bpfConfig;
-    private readonly IConfiguration _configuration = configuration;
+    private readonly EbpfConfiguration _bpfConfig;
+    private readonly IConfiguration _configuration;
     private readonly SemaphoreSlim _semLock = new(1, 1);
-
     #endregion
 
     #region HANDLES
@@ -25,14 +26,26 @@ internal partial class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration c
     private BpfObject? _bpfObject = null;
     private readonly List<BpfLink> _bpfLinks = [];
     private readonly Dictionary<string, BpfMap> _bpfMaps = [];
-
     private bool _disposed = false;
+
+    //temp. => on build from Singleton IEbpfMapConfig injection
+    private readonly Dictionary<string, IEbpfMapConfig> _tmpMapsInit = [];
     #endregion
 
     #region CORE
 
     public string GetProgName => _bpfConfig.ProgramName;
     public string GetProgPath => _bpfConfig.ProgramPath;
+
+    public EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration configuration, IEnumerable<IEbpfMapConfig> mapInit)
+    {
+        _bpfConfig = bpfConfig;
+        _configuration = configuration;
+
+        //tmp mapsInit
+        foreach(var map in mapInit)
+            _tmpMapsInit[map.Name] = map;
+    }
 
     /// <summary>
     /// Main function to start the EbpfRuntime.
@@ -41,7 +54,6 @@ internal partial class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration c
     public async Task<bool> LoadAsync(CancellationToken cancellationToken = default)
     {
         DeamonLogger.WriteLog(ELogError.OK, "Starting Deamon configuration...");
-
         await _semLock.WaitAsync(cancellationToken);
 
         try
@@ -60,6 +72,7 @@ internal partial class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration c
                 return false;
             }
 
+            _tmpMapsInit.Clear();
             _state = EbpfState.Running;
 
             return true;
@@ -123,14 +136,21 @@ internal partial class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration c
             return false;
         }
 
-        if(EbpfMaps.CommonMaps.Count == 0)
+        if(_tmpMapsInit.Keys.Count == 0)
         {
-            DeamonLogger.WriteLog(ELogError.WARNING, "No map declared in EbpfMaps...");
+            DeamonLogger.WriteLog(ELogError.WARNING, "No map declared...");
             return true;
         }
 
-        foreach(string mapName in EbpfMaps.CommonMaps)
+        //load maps.
+        foreach(KeyValuePair<string, IEbpfMapConfig> mapConfig in _tmpMapsInit)
         {
+            string mapName = mapConfig.Key;
+            var conf = mapConfig.Value;
+
+            if(conf.MapType == BpfMapType.Ringbuf)
+                continue;
+
             var map = _bpfObject.FindMap(mapName);
             if(map is null)
             {
@@ -138,11 +158,18 @@ internal partial class EbpfRuntime(EbpfConfiguration bpfConfig, IConfiguration c
                 return false;
             }
 
+            //add default data.
+            IReadOnlyDictionary<byte[], byte[]> keyValues = conf.AddDefaultKeyValuesOnLoad();
+            if(keyValues.Any())
+            {
+                foreach(KeyValuePair<byte[], byte[]> keyValuePair in keyValues)
+                    map.TryUpdate(keyValuePair.Key, keyValuePair.Value);
+            }
+            //-------------------------------------------------------------------------------
+
             _bpfMaps[mapName] = map;
-
             DeamonLogger.WriteLog(ELogError.OK, $"Map {mapName} found.");
-        }
-
+        }        
         DeamonLogger.WriteLog(ELogError.OK, $"{_bpfMaps.Count} map(s) resolved.");
 
         return true;

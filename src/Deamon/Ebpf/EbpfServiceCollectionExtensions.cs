@@ -2,11 +2,10 @@ using Deamon.Cmd;
 using Deamon.Cmd.Abstraction;
 using Deamon.Cmd.Commands;
 using Deamon.Ebpf.Abstraction;
-using Deamon.Ebpf.Debug;
 using Deamon.Ebpf.Events;
+using Deamon.Ebpf.Mapping;
 using Deamon.Ebpf.Runtime;
-using Deamon.Gui;
-using Deamon.Gui.Abstraction;
+using Deamon.Utils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -24,7 +23,16 @@ public static class EbpfServiceCollectionExtensions
         //inject config.
         services.AddSingleton(ebpfConfiguration);
         services.AddSingleton(configuration);
- 
+
+        //Byte comparer
+        services.AddSingleton<ByteArrayComparer>();
+
+        //maps.
+        services.AddSingleton<IEbpfMapConfig, MapRingbuffer>();
+        services.AddSingleton<IEbpfMapConfig, MapHidePid>();
+        //-----------------------------------------------------
+
+        //EbfRuntime receive IEnumerable<IIEbpfMapConfig>
         services.AddSingleton<EbpfRuntime>();
  
         //same instance behind the interface, or the reader would listen to a
