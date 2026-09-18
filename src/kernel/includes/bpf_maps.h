@@ -1,6 +1,8 @@
 /**
  * Contains all map declaration for the eBPF module.
  * 
+ * NOTE => maps name must be max 16 bytes long.
+ * 
  * @author Yekuuun
  */
 
@@ -20,21 +22,21 @@ struct {
     __uint(max_entries, MAX_BINARIES_CONFIG_CACHE);
     __type(key, char[DNAME_MAX]);
     __type(value, __u8); // 1 == active
-} hide_from_cache_bin SEC(".maps");
+} hide_cache_bin SEC(".maps");
 
 struct {
     __uint(type, BPF_MAP_TYPE_HASH);
     __uint(max_entries, MAX_BINARIES_CONFIG_CACHE);
     __type(key, char[DNAME_MAX]);
     __type(value, __u8); // 1 == active
-} hide_from_cache_file SEC(".maps");
+} hide_cache_file SEC(".maps");
 
 struct {
     __uint(type, BPF_MAP_TYPE_HASH);
     __uint(max_entries, MAX_BINARIES_CONFIG_CACHE);
     __type(key, char[DNAME_MAX]);
     __type(value, __u8); // 1 == active
-} hide_from_cache_dir SEC(".maps");
+} hide_cache_dir SEC(".maps");
 
 //----------------------------------------------------
 // ┌────────────────────────────────────┐
@@ -46,7 +48,7 @@ struct {
     __uint(max_entries, 1028);
     __type(key, __u64); //pid_tgid as key.
     __type(value, __u64);
-} getdents64_cache SEC(".maps");
+} getdents_cache SEC(".maps");
 
 //----------------------------------------------------
 // ┌────────────────────────────────────┐

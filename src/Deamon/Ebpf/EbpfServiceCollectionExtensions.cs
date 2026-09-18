@@ -30,6 +30,11 @@ public static class EbpfServiceCollectionExtensions
         //maps.
         services.AddSingleton<IEbpfMapConfig, MapRingbuffer>();
         services.AddSingleton<IEbpfMapConfig, MapHidePid>();
+        services.AddSingleton<IEbpfMapConfig, MapGetDents64>();
+
+        services.AddSingleton<IEbpfMapConfig, MapCacheHideBin>();
+        services.AddSingleton<IEbpfMapConfig, MapCacheHideDir>();
+        services.AddSingleton<IEbpfMapConfig, MapCacheHideFile>();
         //-----------------------------------------------------
 
         //EbfRuntime receive IEnumerable<IIEbpfMapConfig>

