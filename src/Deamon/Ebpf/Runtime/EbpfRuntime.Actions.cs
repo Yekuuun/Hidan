@@ -7,6 +7,73 @@ namespace Deamon.Ebpf.Runtime;
 /// </summary>
 internal partial class EbpfRuntime
 {
+    #region ACTIONS_PROGRAMS
+
+    /// <summary>
+    /// List all loaded programs.
+    /// </summary>
+    /// <returns></returns>
+    public List<ProgramDto> ListPrograms()
+    {
+        if(_state != Abstraction.EbpfState.Running)
+            return [];
+
+        if(_bpfObject == null)
+            return [];
+
+        List<ProgramDto> programs = [];
+
+        //listing.
+        foreach(var prog in _bpfObject.Programs)
+        {
+            programs.Add(new ProgramDto()
+            {
+                Name = prog.Name,
+                Fd = prog.Fd,
+                ProgramType = prog.Type
+            });
+        }
+
+        return programs;
+    }
+
+    /// <summary>
+    /// Find a single program by it's name.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    public ProgramDto? FindProgram(string name)
+    {
+        if(_state != Abstraction.EbpfState.Running)
+            return null;
+
+        if(_bpfObject == null)
+            return null;
+
+        if(string.IsNullOrWhiteSpace(name))
+            return null;
+
+        List<ProgramDto> programs = [];
+
+        //listing.
+        foreach(var prog in _bpfObject.Programs)
+        {
+            if(!string.Equals(prog.Name, name))
+                continue;
+
+            return new ProgramDto()
+            {
+                Name = prog.Name,
+                Fd = prog.Fd,
+                ProgramType = prog.Type
+            };
+        }
+
+        return null;
+    }
+
+    #endregion
+
     #region ACTIONS_MAPS
     /// <summary>
     /// list all avalaible loaded maps & return MapDto object list.

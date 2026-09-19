@@ -43,10 +43,12 @@ public static class EbpfServiceCollectionExtensions
         //same instance behind the interface, or the reader would listen to a
         services.AddSingleton<IEbpfRawEventSource>(sp => (IEbpfRawEventSource)sp.GetRequiredService<EbpfRuntime>());
         services.AddSingleton<IEbpfMapActions>(sp => (IEbpfMapActions)sp.GetRequiredService<EbpfRuntime>());
+        services.AddSingleton<IEbpfProgramActions>(sp => (IEbpfProgramActions)sp.GetRequiredService<EbpfRuntime>());
         services.AddSingleton<IEbpfEventReader, EbpfEventReader>();
 
         //commands
         services.AddSingleton<ICmdCommand, MapCommand>();
+        services.AddSingleton<ICmdCommand, ProgCommand>();
         services.AddSingleton<ICmdCommand, QuitCommand>();
         services.AddSingleton<ICmdCommand, ClearCommand>();
 
