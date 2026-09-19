@@ -47,7 +47,7 @@ int tp_sys_exit_getdents64(struct sys_getdents64_exit_ctx *ctx)
     if(ret <= 0)
         return ret;
 
-    if(__is_target_bin())
+    if(!__is_target_bin())
         return ret;
 
     //get from cache.
