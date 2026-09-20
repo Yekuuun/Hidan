@@ -8,16 +8,15 @@ namespace Deamon.Cmd.Commands;
 
 internal sealed class MapCommand(IEbpfMapActions actions) : CliCommandBase
 {
-    public override string Name => "maps";
+    public override string Name => "map";
 
     public override string Description => "Inspect & edit loaded eBPF maps.";
-
-    public override ReadOnlyCollection<string> Aliases => ["map"];
 
     protected override void Configure(Command command, IOutputCommand output)
     {
         command.Subcommands.Add(BuildList(output));
         command.Subcommands.Add(BuildShow(output));
+        command.Subcommands.Add(BuildDump(output));
     }
 
     #region SUB_COMMANDS
@@ -59,7 +58,7 @@ internal sealed class MapCommand(IEbpfMapActions actions) : CliCommandBase
     private Command BuildShow(IOutputCommand output)
     {
         var nameArg = new Argument<string>("name") { Description = "map name, as printed by 'map list'.", };
-        var show = new Command("show", "Dump the entries of one map.") { nameArg };
+        var show = new Command("show", "Show a single map configuration.") { nameArg };
 
         show.SetAction(pr =>
         {
@@ -77,6 +76,24 @@ internal sealed class MapCommand(IEbpfMapActions actions) : CliCommandBase
         });
 
         return show;
+    }
+
+    /// <summary>
+    /// TO DO : 
+    /// 
+    /// Implement core dump utility.
+    /// </summary>
+    /// <param name="output"></param>
+    /// <returns></returns>
+    private static Command BuildDump(IOutputCommand output)
+    {
+        var dump = new Command("dump", "Dump map datas.");
+        dump.SetAction(_ =>
+        {
+            output.WriteOutput("Use bpftool base utility to dump map informations. Ex : sudo bpftool map dump id <map_id>");
+        });
+
+        return dump;
     }
 
     #endregion

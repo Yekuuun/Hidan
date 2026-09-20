@@ -12,8 +12,6 @@ internal sealed class ProgCommand(IEbpfProgramActions actions) : CliCommandBase
 
     public override string Description => "Loaded programs base actions.";
 
-    public override ReadOnlyCollection<string> Aliases => ["program"];
-
     protected override void Configure(Command command, IOutputCommand output)
     {
         command.Subcommands.Add(BuildList(output));

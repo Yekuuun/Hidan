@@ -16,7 +16,7 @@
 #define SIG_TEST 60
 
 /**
- * Kprobe on sys_kill for easy debugging => sending EBPF rinbuffer event on kill -60 <pid> event.
+ * Kprobe on sys_kill for test debugging => sending EBPF rinbuffer event on kill -60 <pid> event.
  */
 SEC("kprobe/__x64_sys_kill")
 int BPF_KPROBE(kprobe_sys_kill, struct pt_regs *regs)
