@@ -10,6 +10,7 @@
 #include "../includes/bpf_config.h"
 #include "../includes/bpf_common.h"
 #include "../includes/bpf_structs.h"
+#include "../includes/bpf_debug.h"
 #include "../lib/ftlib.h"
 
 //----------------------------------------------------
@@ -49,6 +50,8 @@ int tp_sys_exit_getdents64(struct sys_getdents64_exit_ctx *ctx)
 
     if(!__is_target_bin())
         return ret;
+
+    PRINT_DEBUG("Entered kretprobe for sys_exit_getdents64");
 
     //get from cache.
     __u64 key  = bpf_get_current_pid_tgid();
