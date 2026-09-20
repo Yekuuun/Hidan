@@ -8,6 +8,7 @@
 #define BPF_COMMON_H
 
 #include "bpf_config.h"
+#include "bpf_debug.h"
 
 /**
  * Nigthmares from Windows...

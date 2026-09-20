@@ -25,9 +25,9 @@ typedef struct sys_getdents64_enter_ctx {
     int common_pid;
 
     int __syscall_nr;
-    unsigned int fd;
+    unsigned long fd;
     struct linux_dirent64 *dirent;
-    unsigned int count;
+    unsigned long count;
 } sys_getdents64_enter_ctx;
 
 /**

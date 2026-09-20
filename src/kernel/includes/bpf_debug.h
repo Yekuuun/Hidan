@@ -6,6 +6,6 @@
 #define __STR(x) #x
 #define STR(x)   __STR(x)
 
-#define PRINT_DEBUG(fmt, ...) bpf_printk("[DBG][%s] " fmt "\n", __func__, ##__VA_ARGS__)
+#define PRINT_DEBUG(fmt, ...) bpf_printk("[DBG][%s] " fmt, __func__, ##__VA_ARGS__)
 
 #endif

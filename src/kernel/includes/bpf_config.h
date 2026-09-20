@@ -47,6 +47,4 @@
 #define DT_REG      8
 #endif
 
-#define D_MAX_DEPTH 32
-
 #endif
