@@ -43,4 +43,26 @@ typedef struct sys_getdents64_exit_ctx {
     long ret;
 } sys_getdents64_exit_ctx;
 
+typedef struct sys_getdents_enter_ctx {
+    unsigned short common_type;
+    unsigned char common_flags;
+    unsigned char common_preempt_count;
+    int common_pid;
+
+    int __syscall_nr;
+    unsigned long fd;
+    struct linux_dirent64 *dirent;
+    unsigned long count;
+} sys_getdents_enter_ctx;
+
+typedef struct sys_getdents_exit_ctx {
+    unsigned short common_type;
+    unsigned char common_flags;
+    unsigned char common_preempt_count;
+    int common_pid;
+
+    int __syscall_nr;
+    long ret;
+} sys_getdents_exit_ctx;
+
 #endif

