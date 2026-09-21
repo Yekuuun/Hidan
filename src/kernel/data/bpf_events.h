@@ -9,13 +9,16 @@
 
 #include "../includes/bpf_config.h"
 
+#define MAX_EVENT_DESC 512
+
 //----------------------------------------------------
 // ┌────────────────────────────────────┐
 //  EVENT TYPES
 // └────────────────────────────────────┘
 //----------------------------------------------------
 //TO DO : EVENT BASED LOGS.
-#define EVENT_GLOBAL 1
+#define EVENT_DEBUG     1
+#define EVENT_TRIGGERED 2
 
 //----------------------------------------------------
 // ┌────────────────────────────────────┐
@@ -27,6 +30,11 @@ typedef struct ebpf_event_hdr {
     __u16 size;
     __u32 timestamp;
 } __attribute__((packed)) ebpf_event_hdr;
+
+typedef struct ebpf_event_payload {
+    char event_name[DNAME_MAX];
+    char event_desc[MAX_EVENT_DESC];
+} __attribute__((packed)) ebpf_event_payload;
 
 /**
  * Utility function for setting hdr attributes.
@@ -43,11 +51,7 @@ typedef struct ebpf_event_hdr {
  */
 typedef struct ebpf_event {
     struct ebpf_event_hdr hdr;
-
-    // union common {
-    //     /*TO DO : CREATE PAYLOADS BASED ON EVENTS. */
-    // } payload;
-
+    struct ebpf_event_payload payload;
 } __attribute__((packed)) ebpf_event;
 
 #endif

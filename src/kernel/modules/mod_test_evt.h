@@ -9,6 +9,7 @@
 
 #include "../includes/bpf_config.h"
 #include "../includes/bpf_common.h"
+#include "../includes/bpf_events_handler.h"
 #include "../data/bpf_events.h"
 #include "../data/bpf_ringbuf.h"
 #include "../lib/ftlib.h"
@@ -35,15 +36,7 @@ int BPF_KPROBE(kprobe_sys_kill, struct pt_regs *regs)
     if(!tsk)
         return 0;
 
-    ebpf_event *evt = bpf_ringbuf_reserve(&event_output, sizeof(ebpf_event), 0);
-    if(!evt)
-        return 0;
-
-    __rtl_secure_zero_memory(evt, sizeof(ebpf_event));
-
-    evt->hdr = SET_EVENT_HDR(EVENT_GLOBAL, (__u16)sizeof(ebpf_event), bpf_ktime_get_ns());
-
-    bpf_ringbuf_submit(evt, 0);
+    send_event(EVENT_DEBUG, "__x64_sys_kill", "sys_kill event debug testing.");
     return 0;
 }
 
