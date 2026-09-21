@@ -52,6 +52,8 @@ public static class EbpfServiceCollectionExtensions
         services.AddSingleton<ICmdCommand, QuitCommand>();
         services.AddSingleton<ICmdCommand, ClearCommand>();
 
+        services.AddSingleton<EbpfDebugConfig>();
+
         //Command registry receive IEnumerable<ICmdCommand>
         services.AddSingleton<CommandRegistry>();
  

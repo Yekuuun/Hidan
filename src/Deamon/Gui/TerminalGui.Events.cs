@@ -18,6 +18,9 @@ internal partial class TerminalGui
         {
             await foreach(var evt in _reader.ReadAsync(stoppingToken))
             {
+                if(!_debugConfig.GetStatus() && evt.Header.Type == Ebpf.Config.EbpfEventType.EVENT_DEBUG)
+                    continue;
+
                 WriteEvent($"[{evt.Payload.EventDesc}] {evt.Payload.EventName ?? string.Empty}");
             }
         }

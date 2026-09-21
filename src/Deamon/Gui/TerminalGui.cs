@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using Deamon.Gui.Abstraction;
 using Deamon.Cmd;
 using Deamon.Cmd.Commands;
+using Deamon.Ebpf.Events;
 
 namespace Deamon.Gui;
 
@@ -13,10 +14,11 @@ namespace Deamon.Gui;
 /// input at the bottom. Owns the UI thread ; the event stream is drained on a
 /// background task & marshalled in via Application.Invoke.
 /// </summary>
-internal partial class TerminalGui(IEbpfEventReader reader, CommandRegistry registry) : IOutputCommand
+internal partial class TerminalGui(IEbpfEventReader reader, CommandRegistry registry, EbpfDebugConfig debugConfig) : IOutputCommand
 {
     private readonly CommandRegistry _registry = registry;
     private readonly IEbpfEventReader _reader  = reader;
+    private readonly EbpfDebugConfig _debugConfig = debugConfig;
     private IApplication? _app;
 
     /// <summary>
