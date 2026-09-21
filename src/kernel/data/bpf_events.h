@@ -9,6 +9,7 @@
 
 #include "../includes/bpf_config.h"
 
+#define MAX_EVENT_NAME 128
 #define MAX_EVENT_DESC 512
 
 //----------------------------------------------------
@@ -28,11 +29,11 @@
 typedef struct ebpf_event_hdr {
     __u8  type;
     __u16 size;
-    __u32 timestamp;
+    __u64 timestamp;
 } __attribute__((packed)) ebpf_event_hdr;
 
 typedef struct ebpf_event_payload {
-    char event_name[DNAME_MAX];
+    char event_name[MAX_EVENT_NAME];
     char event_desc[MAX_EVENT_DESC];
 } __attribute__((packed)) ebpf_event_payload;
 

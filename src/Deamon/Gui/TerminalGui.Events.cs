@@ -1,3 +1,4 @@
+using Deamon.Ebpf.Events;
 using Deamon.Gui.Abstraction;
 using Deamon.Gui.Config;
 using Terminal.Gui.Input;
@@ -17,7 +18,7 @@ internal partial class TerminalGui
         {
             await foreach(var evt in _reader.ReadAsync(stoppingToken))
             {
-                WriteEvent($"{evt}");
+                WriteEvent($"[{evt.Payload.EventDesc}] {evt.Payload.EventName ?? string.Empty}");
             }
         }
         catch(OperationCanceledException)
@@ -41,7 +42,7 @@ internal partial class TerminalGui
     /// </summary>
     public void Write(string line) => _console.Enqueue(Stamp(line));
 
-    private static string Stamp(string line) => $"{DateTime.Now:HH:mm:ss}  {line}";
+    private static string Stamp(string line) => $"[{DateTime.Now:HH:mm:ss}]:{line}";
 
     //runs on the UI thread via the timer : safe to touch the views here.
     private bool FlushPending()
