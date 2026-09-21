@@ -1,5 +1,6 @@
 using Deamon.Cmd;
 using Deamon.Ebpf.Abstraction;
+using Deamon.Ebpf.Events;
 using Deamon.Logger;
 using Microsoft.Extensions.Hosting;
 
@@ -10,7 +11,7 @@ namespace Deamon.Gui.Service;
 /// needs a thread of its own : a pooled thread blocked for hours is not one,
 /// so the UI gets a dedicated thread & ExecuteAsync just waits on it.
 /// </summary>
-internal sealed class TerminalGuiService(IEbpfEventReader reader, CommandRegistry registry, IHostApplicationLifetime lifetime) : BackgroundService
+internal sealed class TerminalGuiService(IEbpfEventReader reader, CommandRegistry registry, EbpfDebugConfig debugConfig, IHostApplicationLifetime lifetime) : BackgroundService
 {
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -29,7 +30,7 @@ internal sealed class TerminalGuiService(IEbpfEventReader reader, CommandRegistr
 
     private void RunUi(TaskCompletionSource uiExited, CancellationToken stoppingToken)
     {
-        var gui = new TerminalGui(reader, registry);
+        var gui = new TerminalGui(reader, registry, debugConfig);
         DeamonLogger.SetSink((level, msg) => gui.Write($"[{level}] {msg}"));
 
         try

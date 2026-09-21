@@ -29,7 +29,7 @@ internal partial class TerminalGui
             title: "console",
             maxLines: MaxLines,
             x: 0, y: 0,
-            width: Dim.Percent(65),
+            width: Dim.Percent(50),
             height: Dim.Fill()! - 3
         );
 

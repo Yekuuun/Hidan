@@ -2,5 +2,6 @@ namespace Deamon.Ebpf.Config;
 
 internal enum EbpfEventType : int
 {
-    EVENT_GLOBAL = 1
+    EVENT_DEBUG     = 0x1,
+    EVENT_TRIGGERED = 0x2
 }

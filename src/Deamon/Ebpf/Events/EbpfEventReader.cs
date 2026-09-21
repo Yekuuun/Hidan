@@ -63,8 +63,13 @@ internal sealed class EbpfEventReader(IEbpfRawEventSource source) : IEbpfEventRe
             return false;
         }
 
-        evt = new EbpfEvent(header, new ReadOnlyMemory<byte>(raw, EbpfEventHeader.HeaderSize, raw.Length - EbpfEventHeader.HeaderSize));
+        if(!EbpfEventPayload.TryParse(raw.AsSpan(EbpfEventHeader.HeaderSize), out var payload))
+        {
+            DeamonLogger.WriteLog(ELogError.WARNING, $"[{header.Type}] record too short for payload : {raw.Length}B, need {EbpfEventHeader.HeaderSize + EbpfEventPayload.PayloadSize}B.");
+            return false;
+        }
 
+        evt = new EbpfEvent(header, payload);
         return true;
     }
 }

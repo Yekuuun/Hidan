@@ -1,14 +1,10 @@
 namespace Deamon.Ebpf.Events;
  
 /// <summary>
-/// One validated record : its header, plus the still-unparsed payload bytes.
+/// One validated record : its header, plus its parsed payload.
 /// </summary>
-/// <remarks>
-/// The payload is handed out raw on purpose — payload structs do not exist on
-/// the bpf side yet. Once they do, a typed layer parses <see cref="Payload"/>
-/// according to <see cref="EbpfEventHeader.Type"/>.
-/// </remarks>
-internal readonly record struct EbpfEvent(EbpfEventHeader Header, ReadOnlyMemory<byte> Payload)
+internal readonly record struct EbpfEvent(EbpfEventHeader Header, EbpfEventPayload Payload)
 {
-    public override string ToString() => $"[{Header.Type}] ts={Header.Timestamp} payload={Payload.Length}B";
+    public override string ToString() =>
+        $"[{Header.Type}] ts={EbpfClock.ToUtc(Header.Timestamp):yyyy-MM-dd HH:mm:ss} name={Payload.EventName} desc={Payload.EventDesc}";
 }

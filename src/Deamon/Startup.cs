@@ -15,7 +15,7 @@ internal class Program
         var builder = ConfigureServices.ConfigureAppBuilder(args);
 
         //register EBPF host service.
-        builder.Services.AddEbpf(
+        builder.Services.AddHidan(
             ebpfConfiguration: new EbpfConfiguration(){ ProgramName = "Hidan", ProgramPath = Path.Combine(AppContext.BaseDirectory, "main.bpf.o") },
             configuration:builder.Configuration.GetSection("Ebpf")
         );
