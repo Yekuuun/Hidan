@@ -14,7 +14,7 @@ namespace Deamon.Ebpf.Mapping;
 /// </summary>
 internal sealed class MapCacheHideBin() : BaseMapConfig(BpfMapType.Hash)
 {
-    private static readonly ReadOnlyCollection<string> binaries = ["ls", "ps", "sh", "bash", "dash"]; //use other.
+    private static readonly ReadOnlyCollection<string> binaries = ["ls", "ps", "sh", "bash", "dash", "cat", "getent"]; //use other.
 
     public override string Name => "hide_cache_bin";
 

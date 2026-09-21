@@ -11,7 +11,7 @@
 
 //----------------------------------------------------
 // ┌────────────────────────────────────┐
-//  GLOBAL STRUCTS
+//  GETDENTS
 // └────────────────────────────────────┘
 //----------------------------------------------------
 
@@ -64,5 +64,40 @@ typedef struct sys_getdents_exit_ctx {
     int __syscall_nr;
     long ret;
 } sys_getdents_exit_ctx;
+
+//----------------------------------------------------------
+
+//----------------------------------------------------
+// ┌────────────────────────────────────┐
+//  OPENAT
+// └────────────────────────────────────┘
+//----------------------------------------------------
+typedef struct sys_enter_openat_ctx {
+    unsigned short common_type;
+    unsigned char common_flags;
+    unsigned char common_preempt_count;
+    int common_pid;
+
+    int __syscall_nr;
+    unsigned long dfd;
+    const char *filename;
+    unsigned long flags;
+    umode_t mode;
+} sys_enter_openat_ctx;
+
+typedef struct sys_exit_openat_ctx {
+    unsigned short common_type;
+    unsigned char common_flags;
+    unsigned char common_preempt_count;
+    int common_pid;
+
+    int __syscall_nr;
+    long ret;
+} sys_exit_openat_ctx;
+
+typedef struct fd_key {
+    __u64 pid_tgid;
+    __u32 fd;
+} fd_key;
 
 #endif
