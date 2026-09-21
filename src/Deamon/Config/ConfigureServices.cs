@@ -82,6 +82,8 @@ internal static class ConfigureServices
         services.AddSingleton<EbpfDebugConfig>();
         services.AddSingleton<ICmdCommand, DebugCommand>();
 
+        services.AddSingleton<ICmdCommand, HelpCommand>();
+
         //Command registry receive IEnumerable<ICmdCommand>
         services.AddSingleton<CommandRegistry>();
  
