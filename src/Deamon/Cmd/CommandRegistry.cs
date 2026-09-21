@@ -14,11 +14,20 @@ internal sealed class CommandRegistry
     {
         foreach(var c in commands)
         {
-            _commands[c.Name] = c;
+            if(string.IsNullOrWhiteSpace(c.Name ?? string.Empty))
+                continue;
+
+            string key = c.Name!.ToLower();
+            _commands[key] = c;
 
             if(c.Aliases.Count != 0)
                 foreach(string alias in c.Aliases)
+                {
+                    if(string.IsNullOrWhiteSpace(alias))
+                        break;
+
                     _commands[alias] = c;
+                }
         }
     }
 
