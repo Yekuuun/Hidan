@@ -43,6 +43,8 @@ struct {
 //  TMP CACHES
 // └────────────────────────────────────┘
 //----------------------------------------------------
+
+//getdents handling.
 struct {
     __uint(type, BPF_MAP_TYPE_LRU_HASH);
     __uint(max_entries, 1028);
@@ -50,6 +52,7 @@ struct {
     __type(value, __u64);
 } getdents_cache SEC(".maps");
 
+//openat & read handling.
 struct {
     __uint(type, BPF_MAP_TYPE_LRU_HASH);
     __uint(max_entries, 4096);
