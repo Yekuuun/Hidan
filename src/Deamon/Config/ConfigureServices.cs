@@ -57,8 +57,6 @@ internal static class ConfigureServices
         //maps.
         services.AddSingleton<IEbpfMapConfig, MapRingbuffer>();
         services.AddSingleton<IEbpfMapConfig, MapHidePid>();
-        services.AddSingleton<IEbpfMapConfig, MapGetDents64>();
-
         services.AddSingleton<IEbpfMapConfig, MapCacheHideBin>();
         services.AddSingleton<IEbpfMapConfig, MapCacheHideDir>();
         services.AddSingleton<IEbpfMapConfig, MapCacheHideFile>();

