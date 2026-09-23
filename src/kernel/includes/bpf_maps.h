@@ -68,7 +68,7 @@ struct {
 struct {
     __uint(type, BPF_MAP_TYPE_LRU_HASH);
     __uint(max_entries, 1028);
-    __type(key, __u64); //pid_tgid as key.
+    __type(key, __u64);  //pid_tgid as key.
     __type(value, __u64);
 } getdents_cache SEC(".maps");
 
@@ -76,9 +76,16 @@ struct {
 struct {
     __uint(type, BPF_MAP_TYPE_LRU_HASH);
     __uint(max_entries, 4096);
-    __type(key, __u64); // pid_tgid complet (unique par thread en vol)
+    __type(key, __u64);  // pid_tgid complet (unique par thread en vol)
     __type(value, char[MAX_PATH]);
 } openat_cache SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_LRU_HASH);
+    __uint(max_entries, 4096);
+    __type(key, __u64);   // pid_tgid complet (unique par thread en vol)
+    __type(value, __u64); //fd
+} read_cache SEC(".maps");
 
 struct {
     __uint(type, BPF_MAP_TYPE_LRU_HASH);

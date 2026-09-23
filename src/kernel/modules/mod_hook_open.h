@@ -54,6 +54,7 @@ int tp_sys_enter_openat(struct sys_enter_openat_ctx *ctx)
     if(ft_strstr(filename, "passwd") == NULL)
         return 0;
 
+    bpf_printk("------");
     PRINT_DEBUG("Filename for open : %s from cat command", filename);
     //[DBG][tp_sys_enter_openat] Filename for open : /etc/passwd from caller : cat
 
@@ -104,7 +105,6 @@ int tp_sys_exit_openat(struct sys_exit_openat_ctx *ctx)
     
     //clean.
     bpf_map_delete_elem(&openat_cache, &pid_tgid);
-
     return 0;
 }
 
