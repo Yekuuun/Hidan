@@ -112,33 +112,4 @@ static __always_inline size_t ft_strlen(const char *s, __u32 max)
 
     return i;
 }
-
-/**
- * strstr - Find the first substring in a %NUL terminated string
- * @s1: The string to be searched
- * @s2: The string to search for
- */
-static __always_inline char *ft_strstr(const char *s1, const char *s2)
-{
-	__u32 l1, l2, i, j;
-
-	l2 = ft_strlen(s2, MAX_STR_LEN);
-	if (!l2)
-		return (char *)s1;
-
-	l1 = ft_strlen(s1, MAX_STR_LEN);
-
-	for (i = 0; i < MAX_STR_LEN && i + l2 <= l1; i++) {
-        
-		for (j = 0; j < l2; j++)
-			if (s1[(i + j) & (MAX_STR_LEN - 1)] != s2[j])
-				break;
-
-		if (j == l2)
-			return (char *)s1 + i;
-	}
-
-	return NULL;
-}
-
 #endif
