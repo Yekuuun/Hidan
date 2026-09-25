@@ -84,7 +84,7 @@ struct {
     __uint(type, BPF_MAP_TYPE_LRU_HASH);
     __uint(max_entries, 4096);
     __type(key, __u64);   // pid_tgid complet (unique par thread en vol)
-    __type(value, __u64); //fd
+    __type(value, struct sys_enter_cached_val);
 } read_cache SEC(".maps");
 
 struct {

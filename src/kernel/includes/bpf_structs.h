@@ -127,4 +127,11 @@ typedef struct sys_exit_read_ctx {
     long ret;
 } sys_exit_read_ctx;
 
+typedef struct sys_enter_cached_val{
+    __u32 fd;
+    __u32 count;
+    char *ubuff_adr; //raw address value for __user *buf
+    char path[MAX_PATH];
+} sys_enter_cached_val; 
+
 #endif

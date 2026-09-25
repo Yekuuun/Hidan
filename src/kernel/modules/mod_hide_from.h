@@ -22,7 +22,6 @@
 // └────────────────────────────────────┘
 //----------------------------------------------------
 
-#define MAX_DIR_ITER_LOOP 10000
 
 /**
  * Used in context for bpf_loop since we may be looping on large buffer returned from commands like ls -la /proc
@@ -186,7 +185,7 @@ int tp_sys_exit_getdents64(struct sys_getdents64_exit_ctx *ctx)
         .ret          = ret
     };
 
-    long nr_completed = bpf_loop(MAX_DIR_ITER_LOOP, __process_dirent_entry, &lctx, 0);
+    long nr_completed = bpf_loop(MAX_ITER_LOOP, __process_dirent_entry, &lctx, 0);
 
     return ret;
 }
@@ -228,7 +227,7 @@ int tp_sys_exit_getdents(struct sys_getdents_exit_ctx *ctx)
         .ret          = ret
     };
 
-    long nr_completed = bpf_loop(MAX_DIR_ITER_LOOP, __process_dirent_entry, &lctx, 0);
+    long nr_completed = bpf_loop(MAX_ITER_LOOP, __process_dirent_entry, &lctx, 0);
 
     return ret;
 }

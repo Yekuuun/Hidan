@@ -30,6 +30,12 @@
 
 #define PID_STR_MAX 16 
 
+#ifndef MAX_ITER_LOOP
+#define MAX_ITER_LOOP 10000
+#endif
+
+#define BUFF_READ 256
+
 //----------------------------------------------------
 // ┌────────────────────────────────────┐
 //  DIR UTILITIES
