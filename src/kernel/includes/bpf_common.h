@@ -108,7 +108,7 @@ static long __strstr_step(__u32 i, void *data)
 		ctx->found_at = i;
 		return 1;
 	}
-    
+
 	return 0;
 }
 
@@ -119,7 +119,8 @@ static __always_inline char *ft_strstr(const char *s1, const char *s2)
 {
 	struct strstr_ctx ctx = { .s1 = s1, .found_at = -1 };
 
-	/* Safe copy: bpf_probe_read_kernel_str stops at \0 or
+	/* 
+    * Safe copy: bpf_probe_read_kernel_str stops at \0 or
     * MAX_STR_LEN, and does not require static proof of the actual
     * extent of s2 (that's precisely what it is designed for).
     */

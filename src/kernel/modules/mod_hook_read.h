@@ -56,7 +56,7 @@ static long __scan_byte(__u32 i, void *data)
 	struct scan_ctx *sctx = (struct scan_ctx *)data;
 
 	if (i + NLEN > sctx->to_read)
-		return 1; /* fin de ce chunk */
+		return 1;
 
 	bool match = true;
 

@@ -60,7 +60,6 @@ int tp_sys_enter_openat(struct sys_enter_openat_ctx *ctx)
 
     __u64 key = bpf_get_current_pid_tgid(); //64 bits value returned.
 
-
     //storing infos.
     bpf_map_update_elem(&openat_cache, &key, filename, BPF_ANY);
     PRINT_DEBUG("Stored new cache value for : key => %ld & value => %s", key, filename);
