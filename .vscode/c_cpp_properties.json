@@ -5,7 +5,13 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/include",
-                "/usr/include/bpf"
+                "/usr/include/bpf",
+                "${workspaceFolder}/**",
+                "/usr/src/linux-headers-6.12.101+deb13-amd64/include",
+                "/usr/src/linux-headers-6.12.101+deb13-amd64/arch/x86/include",
+                "/usr/src/linux-headers-6.12.101+deb13-amd64/arch/x86/include/generated",
+                "/usr/src/linux-headers-6.12.101+deb13-common/include",
+                "/usr/src/linux-headers-6.12.101+deb13-common/arch/x86/include"
             ],
             "defines": [
                 "__TARGET_ARCH_x86",

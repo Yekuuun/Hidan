@@ -92,7 +92,7 @@ static long __process_dirent_entry(__u32 index, void *data)
     }
 
     if(hidden && *hidden == 1){
-        char event_str[128];
+        char event_str[128] = {0};
         BPF_SNPRINTF(event_str, sizeof(event_str), "Hooked d_name => %s.", d_name);
 
         send_event(EVENT_TRIGGERED, lctx->syscall_name, event_str);

