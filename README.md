@@ -1,56 +1,34 @@
 ```
-                       ___  ___  ___  ________  ________  ________      
-                      |\  \|\  \|\  \|\   ___ \|\   __  \|\   ___  \    
-                      \ \  \\\  \ \  \ \  \_|\ \ \  \|\  \ \  \\ \  \   
-                       \ \   __  \ \  \ \  \ \\ \ \   __  \ \  \\ \  \  
-                        \ \  \ \  \ \  \ \  \_\\ \ \  \ \  \ \  \\ \  \ 
-                         \ \__\ \__\ \__\ \_______\ \__\ \__\ \__\\ \__\
-                          \|__|\|__|\|__|\|_______|\|__|\|__|\|__| \|__|
-                                                                        
-                 offensive eBPF techniques lab research. linux kernel version > 5.5  
+                           ___  ___  ___  ________  ________  ________      
+                          |\  \|\  \|\  \|\   ___ \|\   __  \|\   ___  \    
+                          \ \  \\\  \ \  \ \  \_|\ \ \  \|\  \ \  \\ \  \   
+                           \ \   __  \ \  \ \  \ \\ \ \   __  \ \  \\ \  \  
+                            \ \  \ \  \ \  \ \  \_\\ \ \  \ \  \ \  \\ \  \ 
+                             \ \__\ \__\ \__\ \_______\ \__\ \__\ \__\\ \__\
+                              \|__|\|__|\|__|\|_______|\|__|\|__|\|__| \|__|
+                                                                            
+                     offensive eBPF techniques lab research. linux kernel version > 5.5
 
 ```
 
----
+## `👨‍💻` Overview
 
-## ⚠️ CRITICAL DISCLAIMERS
+Hidan is a personal research laboratory that explores how legitimate eBPF mechanisms can be weaponized in offensive scenarios. Rather than providing ready-to-use pentesting tools, Hidan serves as a comprehensive proof-of-concept for understanding modern kernel-level attack vectors.
 
-### Research Purpose Only
-**Hidan** is a red team research laboratory designed exclusively for **authorized security testing**, **defensive security research**, and **educational contexts**. This project demonstrates offensive eBPF techniques for legitimate purposes only.
+> [!Important]
+> I can't believe this has to be said but I am _not_ a professional developer... _at all_. I will be making some mistakes and I will never claim that any of my code is the best/most efficient or that any of these techniques are things that I've created/discovered. This project is still under progress and we be continuously updated ;)
 
-### Legal Warning
-- **UNAUTHORIZED ACCESS PROHIBITED**: Deploying these techniques on systems you do not own or have explicit written permission to test is illegal and unethical.
-- **COMPLIANCE REQUIRED**: Ensure you have proper authorization and comply with applicable laws in your jurisdiction.
-- **YOUR RESPONSIBILITY**: Users are solely responsible for ensuring lawful and ethical use of this project.
-- **NO WARRANTY**: This software is provided "as is" without any warranty of fitness or legality for any particular use.
 
-### Authorized Use Only
-This project is intended for use by:
-- Security professionals conducting authorized penetration tests
-- Red teams in controlled lab environments  
-- Researchers studying kernel security mechanisms
-- Defensive security teams evaluating system vulnerabilities
-- Educational institutions with proper oversight
-
-**Unauthorized deployment of these techniques constitutes a serious crime.**
-
----
-
-## Overview
-
-Hidan is a personal research laboratory that explores how legitimate eBPF (extended Berkeley Packet Filter) mechanisms can be weaponized in complex offensive scenarios. Rather than providing ready-to-use pentesting tools, Hidan serves as a comprehensive proof-of-concept for understanding modern kernel-level attack vectors.
-
-### Core Philosophy
+### `⚠️` Core Philosophy 
 The project demonstrates that **defensive mechanisms designed for legitimate purposes** can be repurposed for offensive objectives. By understanding these techniques deeply, defenders can better protect systems against kernel-level threats.
 
-### Technology Stack
+### 🛠️ Tech Stack
 - **Kernel Programs**: Written in eBPF/C with modern hooking techniques (kprobes, kretprobes, LSM hooks, tracepoints)
-- **Userland Daemon**: Pure C# built on top of **Mango.Libbpf** (custom C# library for libbpf bindings)
-- **Approach**: Avoiding Go/Rust constraints for maximum flexibility in userland application design
+- **Userland Daemon**: Pure C# userland app built on top of **Mango.Libbpf**. A custom C# library for libbpf bindings I wrote.
 
 ---
 
-## Architecture & Design
+## 📁 Architecture & Design
 
 ### Two-Tier Architecture
 
@@ -74,183 +52,90 @@ Responsible for:
 - Terminal GUI for debugging and monitoring
 
 **Key Libraries**:
-- `Mango.Libbpf` - Custom C# wrapper for libbpf
-- `Terminal.Gui` - Rich terminal interface
-- `System.CommandLine` - CLI argument parsing
-- `Microsoft.Extensions.*` - Dependency injection & configuration
+- `Mango.Libbpf` - Custom C# wrapper for libbpf => [Official documentation](https://github.com/Yekuuun/Mango)
 
 #### Kernel Component (eBPF)
 Implements the actual hooking mechanisms:
 - **LSM Hooks** - Linux Security Module framework for policy enforcement
 - **Kprobes/Kretprobes** - Kernel function entry/return hooks
 - **Tracepoints** - Static instrumentation points
-- **Ring Buffers** - High-performance event exfiltration
+- **Ring Buffers** - High-performance event exfiltration (mostly used for tracing events)
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 hidan/
-├── README.md                          # This file
-├── LICENSE                            # MIT License
-├── docs/                              # Documentation assets
-│   ├── block_rmdir.png               # Technique demonstration
-│   ├── hidden_pid.png                # Process hiding example
-│   └── hidden_user.png               # User hiding example
+├── README.md                         # This file
+├── LICENSE                           # MIT License
+├── docs/                             # Documentation assets
 │
 ├── scripts/
 │   └── vmlinux.sh                    # Generate vmlinux.h for current kernel
+│   └── show_debug.sh                 # Show live events when ebf program is loaded (PRINT_DEBUG) statements
 │
 └── src/
     ├── build_all.sh                  # Master build script
     ├── Makefile                      # Build orchestration
     │
     ├── kernel/                       # eBPF kernel programs
-    │   ├── main.bpf.c               # Main eBPF entry point
-    │   ├── Makefile                 # Kernel build configuration
-    │   │
-    │   ├── includes/                # Header files
-    │   │   ├── bpf_common.h         # Shared utilities
-    │   │   ├── bpf_config.h         # Configuration constants
-    │   │   ├── bpf_debug.h          # Debug helpers
-    │   │   ├── bpf_events_handler.h # Event system
-    │   │   ├── bpf_maps.h           # Map definitions
-    │   │   ├── bpf_structs.h        # Data structures
-    │   │   └── vmlinux.h            # Auto-generated kernel types
-    │   │
-    │   ├── modules/                 # Feature modules
-    │   │   ├── mod_hide_from.h      # Hide from various mechanisms
-    │   │   ├── mod_hook_open.h      # Hook open() syscall
-    │   │   ├── mod_hook_read.h      # Hook read() syscall
-    │   │   ├── mod_lsm.h            # LSM hook implementations
-    │   │   └── mod_test_evt.h       # Test event generation
-    │   │
-    │   ├── lib/                     # Shared libraries
-    │   │   └── ftlib.h              # Fast utility functions
-    │   │
-    │   ├── data/                    # Data structures
-    │   │   ├── bpf_events.h         # Event definitions
-    │   │   └── bpf_ringbuf.h        # Ring buffer structures
-    │   │
-    │   ├── bin/                     # Build output
-    │   │   └── main.bpf.o          # Compiled eBPF object
-    │   └── out/                     # Intermediate outputs
+    │   ├── main.bpf.c                # Main eBPF entry point
+    │   ├── Makefile                  # Kernel build configuration
+    │   ├── includes/                 # Header files (bpf_*.h)
+    │   ├── modules/                  # Feature modules (mod_*.h)
+    │   ├── lib/                      # Shared utilities
+    │   ├── data/                     # Data structures & buffers
+    │   ├── bin/                      # Compiled object (main.bpf.o)
+    │   └── out/                      # Build artifacts
     │
-    └── Deamon/                       # C# Userland Application
-        ├── Deamon.csproj           # Project configuration
+    └── Deamon/                      # C# Userland Application
+        ├── Deamon.csproj            # Project configuration
         ├── AppSettings.json         # Application settings
-        ├── Startup.cs              # Initialization logic
-        │
-        ├── Ebpf/                   # eBPF Integration Layer
-        │   ├── EbpfRuntime.cs      # Main runtime orchestrator
-        │   ├── EbpfConfiguration.cs # Configuration management
-        │   │
-        │   ├── Abstraction/        # Interfaces & abstractions
-        │   │   ├── IEbpfProgramActions.cs
-        │   │   ├── IEbpfMapActions.cs
-        │   │   ├── IEbpfEventReader.cs
-        │   │   └── EbpfState.cs
-        │   │
-        │   ├── Mapping/            # eBPF Map handlers
-        │   │   ├── BaseMapConfig.cs
-        │   │   ├── MapHidePid.cs
-        │   │   ├── MapCacheHideBin.cs
-        │   │   ├── MapCacheHideDir.cs
-        │   │   └── MapRingbuffer.cs
-        │   │
-        │   ├── Events/             # Event processing
-        │   │   ├── EbpfEventReader.cs
-        │   │   ├── EbpfEvent.cs
-        │   │   ├── EbpfEventPayload.cs
-        │   │   └── EbpfEventHeader.cs
-        │   │
-        │   ├── Runtime/            # Lifecycle & execution
-        │   │   ├── EbpfLifecyleService.cs
-        │   │   ├── EbpfRuntime.Actions.cs
-        │   │   └── EbpfRuntime.Ringbuffer.cs
-        │   │
-        │   ├── Debug/              # Debugging utilities
-        │   │   └── EbpfEventLoggerService.cs
-        │   │
-        │   ├── Config/             # Configuration
-        │   │   └── EbpfConstants.cs
-        │   │
-        │   ├── DTO/                # Data transfer objects
-        │   │   ├── MapDto.cs
-        │   │   └── ProgramDto.cs
-        │   │
-        │   └── Utils/              # Utility functions
-        │       └── EbfpUtils.cs
-        │
-        ├── Cmd/                    # CLI Command Framework
-        │   ├── CommandRegistry.cs  # Command registration
-        │   ├── OutputCommandWriter.cs
-        │   │
-        │   ├── Abstraction/
-        │   │   ├── ICmdCommand.cs
-        │   │   └── CliCommandBase.cs
-        │   │
-        │   └── Commands/           # Implemented commands
-        │       ├── HelpCommand.cs
-        │       ├── ProgCommand.cs   # Program control
-        │       ├── MapCommand.cs    # Map inspection
-        │       ├── DebugCommand.cs  # Debugging
-        │       ├── ClearCommand.cs
-        │       └── QuitCommand.cs
-        │
-        ├── Gui/                    # Terminal UI
-        │   ├── TerminalGui.cs      # Main GUI orchestrator
-        │   ├── TerminalGui.Setup.cs
-        │   ├── TerminalGui.Events.cs
-        │   ├── TerminalGuiService.cs
-        │   ├── TerminalLogPane.cs
-        │   │
-        │   ├── Abstraction/
-        │   │   └── IOutputCommand.cs
-        │   │
-        │   └── Config/
-        │       └── EOutPane.cs
-        │
-        ├── Logger/                 # Logging system
-        │   ├── DeamonLogger.cs
-        │   └── ELogError.cs
-        │
-        ├── Config/                 # Configuration
-        │   └── ConfigureServices.cs
-        │
-        └── Utils/                  # Utilities
-            ├── StrUtils.cs
-            └── ByteArrayComparer.cs
+        ├── Startup.cs               # Initialization logic
+        ├── Ebpf/                    # eBPF Integration Layer
+        │   ├── Abstraction/         # Interfaces (IEbpf*)
+        │   ├── Mapping/             # Map handlers (MapHidePid, etc.)
+        │   ├── Events/              # Event processing
+        │   ├── Runtime/             # Lifecycle & execution
+        │   ├── Debug/               # Debugging utilities
+        │   ├── Config/              # Configuration
+        │   ├── DTO/                 # Data transfer objects
+        │   └── Utils/               # Utility functions
+        ├── Cmd/                     # CLI Command Framework
+        │   ├── Abstraction/         # Command interfaces
+        │   └── Commands/            # Command implementations
+        ├── Gui/                     # Terminal UI components
+        ├── Logger/                  # Logging system
+        ├── Config/                  # DI configuration
+        └── Utils/                   # Shared utilities
 ```
 
 ---
 
-## Offensive Techniques Implemented
+## 👺 Offensive Techniques Implemented
 
-### 1. Process Hiding (PID Hiding)
-**Mechanism**: Hook `getdents64()` syscall to filter process entries from `/proc`
+### 1. Files, Dir's & process hiding
+**Mechanism**: Hook `getdents64()` syscall to filter process entries returned by targetted binaries like ls, ps, etc.
 
 ![Hidden PID Example](docs/hidden_pid.png)
 
 **Implementation**:
 - Intercepts directory listing syscalls
-- Removes entries matching hidden PIDs from kernel-level ringbuffer cache
-- Transparent to userland - processes appear completely invisible
-- **Impact**: Hidden processes don't appear in `ps`, `top`, or `/proc` enumeration
+- Removes entries matching hidden PIDs, filenames, directory names, from kernel-level ringbuffer cache
+- **Impact**: Hidden entries don't appear in `ps`, `top`, or `/proc` enumeration
 
 ---
 
-### 2. File/Directory Hiding
-**Mechanism**: Hook file access syscalls to selectively hide files/directories
+### 2. Read manipulations
+**Mechanism**: Hook file access syscalls to selectively hide data inside
 
 ![Hidden User Example](docs/hidden_user.png)
 
 **Implementation**:
-- Intercepts `open()`, `openat()`, `getdents64()` syscalls
-- Maintains kernel-space cache of hidden paths
-- Blocks access attempts while hiding entries from directory listings
-- **Impact**: Files effectively become invisible and inaccessible to user programs
+- Intercepts `open()`, `openat()`, `read()` syscalls
+- Overwrite content inside files like `/etc/passwd`
+- **Impact**: Some content is overwrite
 
 ---
 
@@ -260,24 +145,17 @@ hidan/
 ![Block RMDIR Example](docs/block_rmdir.png)
 
 **Implementation**:
-- LSM `bprm_check_security` and `file_*` hooks
+- LSM `rmdir`, `chown`, `ptrace` hooks
 - Prevent directory removal, file deletion, or other operations
 - **Impact**: Critical system paths can be immutable without traditional ACLs
 
 ---
 
-### 4. LSM Hook-Based Access Control
-**Technique**: Leverage Linux Security Module framework for fine-grained control
-
-**Capabilities**:
-- `bprm_check_security` - Control binary execution
-- `file_open` - Intercept file access
-- `file_permission` - Fine-grained permission checks
-- `bpf_lsm_*` hooks - Modern eBPF-based LSM integration
+### 4. Other coming...
 
 ---
 
-## Dependencies
+## 🧰 Dependencies
 
 ### System Requirements
 - **Linux Kernel**: Version 5.5 or later (eBPF BPF LSM support)
@@ -304,57 +182,19 @@ pahole          # Required for vmlinux.h generation
 
 #### Userland (C#/.NET)
 ```
-.NET 10.0 SDK or later
-  - Microsoft.Extensions.Hosting (10.0.12)
-  - Microsoft.Extensions.Configuration (10.0.12)
-  - Microsoft.Extensions.Options (10.0.12)
-  - System.CommandLine (2.0.12)
-  - Terminal.Gui (2.5.0)
-  - Mango.Libbpf (0.0.4+)
+.NET 10.0 SDK or later & linked nuget packages.
 ```
 
 ### Installation
 
 #### Debian/Ubuntu
 ```bash
-sudo apt-get update
-sudo apt-get install -y \
-    clang llvm llvm-dev \
-    libbpf-dev \
-    linux-headers-$(uname -r) \
-    bpftool \
-    pahole
+install deps in /scripts/deps.sh
 ```
-
-#### RHEL/CentOS/Fedora
-```bash
-sudo dnf install -y \
-    clang llvm llvm-devel \
-    libbpf-devel \
-    kernel-devel-$(uname -r) \
-    bpf-tools
-```
-
-#### .NET Runtime
-Install from: https://dotnet.microsoft.com/download
 
 ---
 
-## Building & Installation
-
-### Prerequisites Check
-```bash
-# Verify kernel version
-uname -r                    # Must be >= 5.5
-
-# Check BPF support
-cat /boot/config-$(uname -r) | grep CONFIG_BPF
-# Should show: CONFIG_BPF=y
-
-# Verify LSM BPF support
-cat /boot/config-$(uname -r) | grep CONFIG_BPF_LSM
-# Should show: CONFIG_BPF_LSM=y
-```
+## `👨‍💻` Building & Installation
 
 ### Build Steps
 
@@ -380,104 +220,12 @@ This script:
 #### 3. Run the Daemon
 ```bash
 sudo ./out/deamon
-# Loads eBPF programs and starts interactive CLI
 ```
-
-### Build Troubleshooting
-
-**Issue**: `clang: unknown target 'bpf'`
-```bash
-# Upgrade LLVM/Clang
-clang --version  # Should be 10.0+
-```
-
-**Issue**: `libbpf not found`
-```bash
-# Ensure libbpf headers are available
-pkg-config --cflags libbpf
-```
-
-**Issue**: `vmlinux.h generation fails`
-```bash
-# Manually generate from kernel build:
-bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h
-```
-
 ---
 
 ## Usage & Interactive Commands
 
-Once the daemon is running (`sudo ./out/deamon`), interact via CLI:
-
-### Program Management
-```bash
-prog list              # List loaded eBPF programs
-prog load <id>         # Load specific program
-prog unload <id>       # Unload program
-prog state             # Show program states
-```
-
-### Map Inspection & Control
-```bash
-map list               # List all eBPF maps
-map dump <name>        # Dump map contents
-map clear <name>       # Clear map
-map set <name> <k> <v> # Set map entry
-```
-
-### Debugging
-```bash
-debug on                # Enable debug output
-debug off               # Disable debug output
-debug events            # Show kernel events
-```
-
-### Utility Commands
-```bash
-help                   # Show command help
-clear                  # Clear terminal
-quit                   # Exit daemon
-```
-
-### Example Workflow
-```bash
-sudo ./out/deamon
-
-# Load and activate PID hiding
-prog load 0
-map list
-map set hide_pid 1234  # Hide PID 1234
-
-# Verify process is hidden
-# (In another terminal: ps aux | grep 1234 should show nothing)
-
-debug on
-debug events           # Monitor events in real-time
-```
-
----
-
-## Technical Deep-Dives
-
-### Event System (Ring Buffer)
-- **Location**: `src/kernel/data/bpf_ringbuf.h`
-- **Purpose**: High-performance, lock-free event exfiltration from kernel to userland
-- **Payload**: Event headers + context data for debugging and audit trails
-
-### Map Abstractions
-- **Hide PID Map** (`MapHidePid.cs`): Tracks processes to hide
-- **File Cache Maps** (`MapCacheHideBin.cs`, etc.): Caches hidden file/directory paths
-- **Ring Buffer Map** (`MapRingbuffer.cs`): Event queue
-
-### Lifecycle Management
-- `EbpfLifecyleService.cs` - Handles attachment/detachment of hooks
-- `EbpfRuntime.cs` - Orchestrates loading and event consumption
-- Graceful cleanup on daemon shutdown
-
-### String Filtering
-- **Location**: `src/kernel/lib/ftlib.h`
-- **Purpose**: Efficient kernel-space string operations
-- Custom `__bpf_strstr` implementation avoiding kernel helper calls
+Once the daemon is running (`sudo ./out/deamon`), interact via CLI: using the help command
 
 ---
 
@@ -491,16 +239,6 @@ These techniques can be detected by:
 - **Signed code analysis** - verifying program integrity
 - **Secureboot + LSM enforcement** - restricting eBPF loading
 - **Audit subsystem** - detailed syscall tracking
-
-### Mitigation Strategies
-
-Defenders should:
-1. **Disable eBPF in untrusted contexts** - Set `kernel.unprivileged_bpf_disabled=1`
-2. **Require LSM enforcement** - Configure SELinux/AppArmor policies
-3. **Monitor `/proc/sys/kernel/bpf_stats_enabled`** - Track eBPF activity
-4. **Use integrity checkers** - Verify system binaries haven't been hidden
-5. **Kernel module signing** - Restrict eBPF program loading
-6. **Hardware security** - TPM-based attestation
 
 ---
 
@@ -520,16 +258,9 @@ Defenders should:
 - ❌ Multi-stage exploitation framework
 - ❌ Exploit development toolkit
 
-### What This IS
-- ✅ Educational research on eBPF offensive capabilities
-- ✅ Proof-of-concept for kernel attack vectors
-- ✅ Demonstration of legitimate mechanism misuse
-- ✅ Defensive security research material
-- ✅ Reference implementation for understanding eBPF hooking
-
 ---
 
-## References & Resources
+## 📚 References & Resources
 
 ### eBPF Documentation
 - [eBPF Official Documentation](https://docs.ebpf.io/) - Comprehensive eBPF guide
@@ -544,26 +275,16 @@ Defenders should:
 ### eBPF Debugging
 - [eBPF Debugging Guide](https://oneuptime.com/blog/ebpf-debugging-troubleshooting) - Troubleshooting
 - [BPF Loader](https://github.com/libbpf/libbpf) - Official loader reference
-- [Kernel Tracing](https://www.kernel.org/doc/html/latest/trace/ftrace.html) - ftrace guide
-
 ### Related Research
 - [Singularity - Rootkit Research](https://github.com/MatheuZSecurity/Singularity) - eBPF rootkit research
 - [TripleCross](https://github.com/Yekuuun/TripleCross) - Advanced eBPF techniques
 - [bpfload - Program Loader](https://github.com/libbpf/libbpf-bootstrap) - Bootstrap reference
 
-### Security Research Communities
-- [Kernel Self Protection Project](https://kernsec.org/) - Kernel hardening
-- [CanSecWest](https://cansecwest.com/) - Security conference
-- [Black Hat](https://www.blackhat.com/) - Security research venue
-
 ---
 
-## Contributing & Feedback
+## `🫂` Contributing
 
-This is a personal research project. For questions, improvements, or discussions:
-- **Issues**: Research ideas or technical improvements
-- **Security**: Report responsibly to maintainer
-- **Legal**: Ensure authorized use only
+I'm open to contribution ! Do not hesitate to contact me on my discord `mrcandieee` to work together.
 
 ---
 
@@ -571,19 +292,3 @@ This is a personal research project. For questions, improvements, or discussions
 
 MIT License - See [LICENSE](LICENSE) file
 Copyright (c) 2026 0xYkn
-
----
-
-## Author
-
-**Yekuuun** - Red Team Security Research
-- Focus: Kernel-level offensive techniques, eBPF research
-- Contact: Research inquiries only
-
----
-
-**Last Updated**: September 2026  
-**Status**: Active Research  
-**Kernel Target**: Linux 5.5+  
-
-⚠️ **REMEMBER**: This is a research tool for authorized security professionals only. Unauthorized access is illegal.
