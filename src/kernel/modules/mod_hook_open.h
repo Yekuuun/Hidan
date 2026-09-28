@@ -51,7 +51,7 @@ int tp_sys_enter_openat(struct sys_enter_openat_ctx *ctx)
         return 0; //silence.
 
     //only keep passwd for testing.
-    if(ft_strstr(filename, "passwd") == NULL)
+    if(__bpf_strstr(filename, "passwd") == NULL)
         return 0;
 
     bpf_printk("------");

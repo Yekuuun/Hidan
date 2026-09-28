@@ -217,7 +217,7 @@ int tp_sys_exit_read(struct sys_exit_read_ctx *ctx)
     PRINT_DEBUG("   Entry of sys_exit_read => resolved fd => %ld", fd);
 
     //only keep passwd for testing.
-    if(ft_strstr(cache->path, "passwd") == NULL){
+    if(__bpf_strstr(cache->path, "passwd") == NULL){
         PRINT_DEBUG("   NOT /etc/passwd ???? WHUUUUUUUUUUUT");
         goto __END;
     }

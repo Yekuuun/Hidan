@@ -124,7 +124,7 @@ static long __strstr_step(__u32 i, void *data)
 /**
  * Custom eBPF like strstr function.
  */
-static __always_inline char *ft_strstr(const char *s1, const char *s2)
+static __always_inline char *__bpf_strstr(const char *s1, const char *s2)
 {
 	struct strstr_ctx ctx = { .s1 = s1, .found_at = -1 };
 
@@ -154,31 +154,20 @@ static __always_inline char *ft_strstr(const char *s1, const char *s2)
 /**
  * Extract the first path component (text before the first '/') into `out`.
  */
-static __always_inline int __extract_dname_from_path(const char *path, char *out, __u32 out_sz)
+static __always_inline char *__extract_dname_from_path(char *buf, __u32 buf_sz)
 {
-	if (!path || !out || !out_sz)
-		return -1;
+    if (!buf)
+        return NULL;
 
-	const char *slash = ft_strstr(path, "/");
-	if (!slash) {
-		return bpf_probe_read_kernel_str(out, out_sz, path) < 0 ? -1 : 0;
-	}
-
-	__u32 len = slash - path;
-	if (len >= out_sz)
-		len = out_sz - 1;
-
-	if (len == 0) {
-		out[0] = '\0';
-		return 0;
-	}
-
-	if (bpf_probe_read_kernel_str(out, len + 1, path) < 0) {
-		PRINT_DEBUG("Error reading dest path.");
-		return -1;
-	}
-
-	return 0;
+    for (__u32 i = 0; i < buf_sz; i++) {
+        if (buf[i] == '/') {
+            buf[i] = '\0';
+            return buf;
+        }
+        if (buf[i] == '\0')
+            break;
+    }
+    return buf;
 }
 
 #endif

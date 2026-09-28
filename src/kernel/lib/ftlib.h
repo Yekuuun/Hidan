@@ -106,10 +106,12 @@ static __always_inline size_t ft_strlen(const char *s, __u32 max)
 {
     size_t i;
 
+    #pragma unroll
     for (i = 0; i < max; i++)
         if (s[i] == '\0')
             break;
 
     return i;
 }
+
 #endif
