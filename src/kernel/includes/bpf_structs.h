@@ -100,4 +100,38 @@ typedef struct fd_key {
     __u32 fd;
 } fd_key;
 
+//----------------------------------------------------
+// ┌────────────────────────────────────┐
+//  OPENAT
+// └────────────────────────────────────┘
+//----------------------------------------------------
+typedef struct sys_enter_read_ctx {
+    unsigned short common_type;
+    unsigned char common_flags;
+    unsigned char common_preempt_count;
+    int common_pid;
+
+    int __syscall_nr;
+    unsigned long fd;
+    char *buf;
+    unsigned long count;
+} sys_enter_read_ctx;
+
+typedef struct sys_exit_read_ctx {
+    unsigned short common_type;
+    unsigned char common_flags;
+    unsigned char common_preempt_count;
+    int common_pid;
+
+    int __syscall_nr;
+    long ret;
+} sys_exit_read_ctx;
+
+typedef struct sys_enter_cached_val{
+    __u32 fd;
+    __u32 count;
+    char *ubuff_adr; //raw address value for __user *buf
+    char path[MAX_PATH];
+} sys_enter_cached_val; 
+
 #endif

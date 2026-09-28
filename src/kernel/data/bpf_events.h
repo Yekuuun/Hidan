@@ -17,7 +17,6 @@
 //  EVENT TYPES
 // └────────────────────────────────────┘
 //----------------------------------------------------
-//TO DO : EVENT BASED LOGS.
 #define EVENT_DEBUG     1
 #define EVENT_TRIGGERED 2
 

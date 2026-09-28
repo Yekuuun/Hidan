@@ -14,6 +14,9 @@
 //modules
 #include "./modules/mod_hide_from.h"
 #include "./modules/mod_test_evt.h"
+#include "./modules/mod_hook_read.h"
+#include "./modules/mod_hook_open.h"
+#include "./modules/mod_lsm.h"
 
 /**
  * 

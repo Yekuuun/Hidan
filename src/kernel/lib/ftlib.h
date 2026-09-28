@@ -16,6 +16,8 @@
 // └────────────────────────────────────┘ 
 //----------------------------------------------------
 
+#define MAX_STR_LEN 128
+
 /**
  * Check if is c is a valid numeric character.
  */
@@ -95,6 +97,21 @@ static __always_inline int ft_strcmp(const char *cs, const char *ct, __u32 max)
     }
 
     return 0;
+}
+
+/**
+ * Custom strlen function.
+ */
+static __always_inline size_t ft_strlen(const char *s, __u32 max)
+{
+    size_t i;
+
+    #pragma unroll
+    for (i = 0; i < max; i++)
+        if (s[i] == '\0')
+            break;
+
+    return i;
 }
 
 #endif
