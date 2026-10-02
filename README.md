@@ -116,13 +116,13 @@ hidan/
 ## 👺 Offensive Techniques Implemented
 
 ### 1. Files, Dir's & process hiding
-**Mechanism**: Hook `getdents64()` syscall to filter process entries returned by targetted binaries like ls, ps, etc.
+**Mechanism**: Hook `getdents64()` syscall to filter data returned by targetted binaries like ls, ps, etc.
 
 ![Hidden PID Example](docs/hidden_pid.png)
 
 **Implementation**:
 - Intercepts directory listing syscalls
-- Removes entries matching hidden PIDs, filenames, directory names, from kernel-level ringbuffer cache
+- Removes entries matching hidden PIDs, filenames, directory names, from kernel allocated buffers
 - **Impact**: Hidden entries don't appear in `ps`, `top`, or `/proc` enumeration
 
 ---
@@ -135,7 +135,7 @@ hidan/
 **Implementation**:
 - Intercepts `open()`, `openat()`, `read()` syscalls
 - Overwrite content inside files like `/etc/passwd`
-- **Impact**: Some content is overwrite
+- **Impact**: Hiding data returned from read syscalls etc
 
 ---
 
@@ -147,7 +147,7 @@ hidan/
 **Implementation**:
 - LSM `rmdir`, `chown`, `ptrace` hooks
 - Prevent directory removal, file deletion, or other operations
-- **Impact**: Critical system paths can be immutable without traditional ACLs
+- **Impact**: Blocking user actions like rmdir, chown etc
 
 ---
 
