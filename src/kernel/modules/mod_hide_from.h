@@ -42,7 +42,7 @@ typedef struct getdents_loop_ctx {
  * @param index => current iteration number 
  * @param data  => ptr to ctx passed in bpf_loop()
  */
-static long __process_dirent_entry(__u32 index, void *data)
+static __noinline long __process_dirent_entry(__u32 index, void *data)
 {
     struct getdents_loop_ctx *lctx = (struct getdents_loop_ctx*)data;
     if(!lctx)
