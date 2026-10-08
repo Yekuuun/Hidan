@@ -20,6 +20,10 @@
 #define MAX_PID_ENTRIES 32
 #define MAX_BINARIES_CONFIG_CACHE 64
 
+#ifndef MAX_STR_LEN
+#define MAX_STR_LEN 128
+#endif
+
 #ifndef TASK_COMM_LEN
 #define TASK_COMM_LEN 16
 #endif

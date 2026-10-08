@@ -51,7 +51,7 @@ typedef struct scan_ctx {
 /**
  * Raw byte scanner to find matching.
  */
-static long __scan_byte(__u32 i, void *data)
+static __noinline long __scan_byte(__u32 i, void *data)
 {
 	struct scan_ctx *sctx = (struct scan_ctx *)data;
 
@@ -88,7 +88,7 @@ static long __scan_byte(__u32 i, void *data)
  */
 #define OVERLAP (NLEN - 1)
 
-static long __read_user_buffer(__u32 index, void *data)
+static __noinline long __read_user_buffer(__u32 index, void *data)
 {
 	struct read_loop_ctx *lctx = (struct read_loop_ctx *)data;
 	if (!lctx)

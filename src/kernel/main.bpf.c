@@ -17,6 +17,7 @@
 #include "./modules/mod_hook_read.h"
 #include "./modules/mod_hook_open.h"
 #include "./modules/mod_lsm.h"
+#include "./modules/mod_hook_exec.h"
 
 /**
  * 
