@@ -1,15 +1,16 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using Deamon.Ebpf.Abstraction;
 using Deamon.Ebpf.Utils;
 using Deamon.Utils;
 using Mango.Interops;
 
 namespace Deamon.Ebpf.Mapping;
 
-internal sealed class MapHidePid() : BaseMapConfig(BpfMapType.Hash)
+internal sealed class MapHidePid() : BaseMapConfig(BpfMapType.Hash, new EbpfMapTypeObj(Key:typeof(UInt32), Val:typeof(byte)))
 {
     //for testing purpose.
-    private ReadOnlyCollection<string> defaultApps = ["gnome-text-editor"];
+    private readonly ReadOnlyCollection<string> defaultApps = ["gnome-text-editor"];
     public override string Name => "hide_pid_cache";
 
     public override string Description => "simple maps for pid's to hide";

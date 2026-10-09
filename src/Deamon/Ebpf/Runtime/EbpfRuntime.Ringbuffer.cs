@@ -47,7 +47,7 @@ internal partial class EbpfRuntime
             return false;
 
 
-        foreach(KeyValuePair<string, IEbpfMapConfig> mapConfig in _tmpMapsInit)
+        foreach(KeyValuePair<string, IEbpfMapConfig> mapConfig in _mapConfigs)
         {
             string mapName = mapConfig.Key;
             var conf = mapConfig.Value;

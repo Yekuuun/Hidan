@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Deamon.Ebpf.Abstraction;
 using Deamon.Ebpf.Config;
 using Deamon.Ebpf.Utils;
 using Deamon.Utils;
@@ -6,7 +7,7 @@ using Mango.Interops;
 
 namespace Deamon.Ebpf.Mapping;
 
-internal sealed class MapCacheHideFile() : BaseMapConfig(BpfMapType.Hash)
+internal sealed class MapCacheHideFile() : BaseMapConfig(BpfMapType.Hash, new EbpfMapTypeObj(Key:typeof(string), Val:typeof(byte)))
 {
     private static readonly ReadOnlyCollection<string> filenames = ["passwd"]; //use other.
 

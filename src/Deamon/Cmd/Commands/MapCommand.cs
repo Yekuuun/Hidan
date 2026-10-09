@@ -9,14 +9,20 @@ namespace Deamon.Cmd.Commands;
 internal sealed class MapCommand(IEbpfMapActions actions) : CliCommandBase
 {
     public override string Name => "map";
-
     public override string Description => "Inspect & edit loaded eBPF maps.";
 
+    /// <summary>
+    /// Main method to config all subcommands modules.
+    /// </summary>
+    /// <param name="command"></param>
+    /// <param name="output"></param>
     protected override void Configure(Command command, IOutputCommand output)
     {
         command.Subcommands.Add(BuildList(output));
         command.Subcommands.Add(BuildShow(output));
         command.Subcommands.Add(BuildDump(output));
+        command.Subcommands.Add(BuildMapUpdate(output));
+        command.Subcommands.Add(BuildMapRemove(output));
     }
 
     #region SUB_COMMANDS
@@ -95,6 +101,26 @@ internal sealed class MapCommand(IEbpfMapActions actions) : CliCommandBase
 
         return dump;
     }
+
+    private static Command BuildMapUpdate(IOutputCommand output)
+    {
+        throw new NotImplementedException();
+    }
+
+    private static Command BuildMapRemove(IOutputCommand output)
+    {
+        throw new NotImplementedException();
+    }
+    
+    /*
+    * Update val : 
+    * map name => loop => find => convert value => try to update / add
+    */
+
+    /*
+    * Remove val : 
+    * map name => loop => find => key ? => delete if found.
+    */
 
     #endregion
 }

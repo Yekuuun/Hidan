@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Text;
+using Deamon.Ebpf.Abstraction;
 using Deamon.Ebpf.Config;
 using Deamon.Ebpf.Utils;
 using Deamon.Utils;
@@ -12,7 +13,7 @@ namespace Deamon.Ebpf.Mapping;
 /// 
 /// Use ls -la /usr/bin or other folders containing usefull binaries to add them in default values.
 /// </summary>
-internal sealed class MapCacheHideBin() : BaseMapConfig(BpfMapType.Hash)
+internal sealed class MapCacheHideBin() : BaseMapConfig(BpfMapType.Hash, new EbpfMapTypeObj(Key:typeof(string), Val:typeof(byte)))
 {
     private static readonly ReadOnlyCollection<string> binaries = ["ls", "ps", "sh", "bash", "dash", "cat", "getent"]; //use other.
 

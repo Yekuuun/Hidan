@@ -8,8 +8,9 @@ namespace Deamon.Ebpf.Mapping;
 /// Common metadata for a loaded map. Concrete maps that need seeding derive
 /// from <see cref="SeededMapConfig{TValue}"/> instead.
 /// </summary>
-internal abstract class BaseMapConfig(BpfMapType type) : IEbpfMapConfig
+internal abstract class BaseMapConfig(BpfMapType type, EbpfMapTypeObj? typeConf = null) : IEbpfMapConfig
 {
+    protected readonly EbpfMapTypeObj? _typeConf = typeConf;
     public abstract string Name {get;}
     public abstract string Description {get;}
 

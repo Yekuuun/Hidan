@@ -21,6 +21,7 @@ internal sealed class CommandRegistry
             _commands[key] = c;
 
             if(c.Aliases.Count != 0)
+            {
                 foreach(string alias in c.Aliases)
                 {
                     if(string.IsNullOrWhiteSpace(alias))
@@ -28,9 +29,15 @@ internal sealed class CommandRegistry
 
                     _commands[alias] = c;
                 }
+            }
         }
     }
 
+    /// <summary>
+    /// Try to execute a single command.
+    /// </summary>
+    /// <param name="rawInput"></param>
+    /// <param name="output"></param>
     public void TryExecute(string rawInput, IOutputCommand output)
     {
         var tokens = Tokenize(rawInput);
