@@ -29,7 +29,7 @@ internal partial class EbpfRuntime : IEbpfRawEventSource, IEbpfMapActions, IEbpf
     private bool _disposed = false;
 
     //temp. => on build from Singleton IEbpfMapConfig injection
-    private readonly Dictionary<string, IEbpfMapConfig> _tmpMapsInit = [];
+    private readonly Dictionary<string, IEbpfMapConfig> _mapConfigs = [];
     #endregion
 
     #region CORE
@@ -44,7 +44,7 @@ internal partial class EbpfRuntime : IEbpfRawEventSource, IEbpfMapActions, IEbpf
 
         //tmp mapsInit
         foreach(var map in mapInit)
-            _tmpMapsInit[map.Name] = map;
+            _mapConfigs[map.Name] = map;
     }
 
     /// <summary>
@@ -72,7 +72,10 @@ internal partial class EbpfRuntime : IEbpfRawEventSource, IEbpfMapActions, IEbpf
                 return false;
             }
 
-            _tmpMapsInit.Clear();
+            /*
+            * NOTE ? Creating a more generic struct containing both IEbpfMapConfig & bpfMaps ? 
+            */
+            //_tmpMapsInit.Clear();
             _state = EbpfState.Running;
 
             return true;
@@ -136,14 +139,14 @@ internal partial class EbpfRuntime : IEbpfRawEventSource, IEbpfMapActions, IEbpf
             return false;
         }
 
-        if(_tmpMapsInit.Keys.Count == 0)
+        if(_mapConfigs.Keys.Count == 0)
         {
             DeamonLogger.WriteLog(ELogError.WARNING, "No map declared...");
             return true;
         }
 
         //load maps.
-        foreach(KeyValuePair<string, IEbpfMapConfig> mapConfig in _tmpMapsInit)
+        foreach(KeyValuePair<string, IEbpfMapConfig> mapConfig in _mapConfigs)
         {
             string mapName = mapConfig.Key;
             var conf = mapConfig.Value;
@@ -254,6 +257,7 @@ internal partial class EbpfRuntime : IEbpfRawEventSource, IEbpfMapActions, IEbpf
         }
         finally
         {
+            _mapConfigs.Clear();
             _semLock.Release();
             _semLock.Dispose();
         }
