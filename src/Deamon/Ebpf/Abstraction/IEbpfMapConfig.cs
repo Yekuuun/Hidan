@@ -12,6 +12,7 @@ internal interface IEbpfMapConfig
     string Description {get;}
 
     BpfMapType MapType {get;}
+    EbpfMapTypeObj? KeyValuesTypes {get;}
 
     IReadOnlyDictionary<byte[], byte[]> AddDefaultKeyValuesOnLoad();
 }

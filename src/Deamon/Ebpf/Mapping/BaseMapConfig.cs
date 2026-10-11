@@ -15,6 +15,7 @@ internal abstract class BaseMapConfig(BpfMapType type, EbpfMapTypeObj? typeConf 
     public abstract string Description {get;}
 
     public BpfMapType MapType => type;
+    public EbpfMapTypeObj? KeyValuesTypes => _typeConf;
 
     public abstract IReadOnlyDictionary<byte[], byte[]> AddDefaultKeyValuesOnLoad();
 }

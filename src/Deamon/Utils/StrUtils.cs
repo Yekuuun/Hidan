@@ -8,6 +8,7 @@ internal static class StrUtils
     {
         byte[] buffer = new byte[size];
         var written   = Encoding.UTF8.GetBytes(s, 0, s.Length, buffer, 0);
+        
         if(written >= size)
             throw new ArgumentException($"'{s}' is too long for a {size}-byte key (max {size - 1} chars + null terminator).");
 

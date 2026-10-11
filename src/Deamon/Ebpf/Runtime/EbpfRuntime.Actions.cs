@@ -129,6 +129,20 @@ internal partial class EbpfRuntime
         };
     }
 
+    public IEbpfMapConfig? GetMapConf(string name)
+    {
+        if(string.IsNullOrWhiteSpace(name))
+            return null;
+
+        if(!CheckState())
+            return null;
+
+        if(!_mapConfigs.TryGetValue(name, out IEbpfMapConfig? conf))
+            return null;
+
+        return conf;
+    }
+
     /// <summary>
     /// Try to update / add value inside a targetted map.
     /// </summary>

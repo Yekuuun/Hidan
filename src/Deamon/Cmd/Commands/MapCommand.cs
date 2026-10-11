@@ -1,8 +1,9 @@
-using System.Collections.ObjectModel;
 using System.CommandLine;
+using System.Text;
 using Deamon.Cmd.Abstraction;
 using Deamon.Ebpf.Abstraction;
 using Deamon.Gui.Abstraction;
+using Deamon.Utils;
 
 namespace Deamon.Cmd.Commands;
 
@@ -102,25 +103,140 @@ internal sealed class MapCommand(IEbpfMapActions actions) : CliCommandBase
         return dump;
     }
 
-    private static Command BuildMapUpdate(IOutputCommand output)
+    /// <summary>
+    /// Update command utility to add / update values in maps
+    /// </summary>
+    /// <param name="output"></param>
+    /// <returns></returns>
+    private Command BuildMapUpdate(IOutputCommand output)
     {
-        throw new NotImplementedException();
+        var nameArg = new Argument<string>("name") { Description = "map name, as printed by 'map list'" };
+        var keyArg  = new Argument<string>("key")  { Description = "key value" };
+        var valArg  = new Argument<string>("value") { Description = "value to add / update" };
+
+        // Args must be registered on the command, or GetValue fails.
+        var update = new Command("update", "update / add element in a single map") { nameArg, keyArg, valArg };
+
+        update.SetAction(pr =>
+        {
+            string mapName = pr.GetValue(nameArg) ?? string.Empty;
+            string rawKey  = pr.GetValue(keyArg)  ?? string.Empty;
+            string rawVal  = pr.GetValue(valArg)  ?? string.Empty;
+
+            IEbpfMapConfig? mapConf = actions.GetMapConf(mapName);
+            if (mapConf is null)
+            {
+                output.WriteOutput($"Unable to find map with name : {mapName}. Use 'map list' to see all available maps.");
+                return;
+            }
+
+            EbpfMapTypeObj? types = mapConf.KeyValuesTypes;
+            if (types is null)
+            {
+                output.WriteOutput("Unable to get map types configuration.");
+                return;
+            }
+
+            // Drop '.Value' if EbpfMapTypeObj is a class and not a struct.
+            if (!TypedValueParser.TryParse(rawKey, types.Value.Key, out object? key, out string? keyErr))
+            {
+                output.WriteOutput($"Invalid key: {keyErr}");
+                return;
+            }
+
+            if (!TypedValueParser.TryParse(rawVal, types.Value.Val, out object? val, out string? valErr))
+            {
+                output.WriteOutput($"Invalid value: {valErr}");
+                return;
+            }
+
+            if (!TryEncode(key!, out byte[]? keyBytes) || !TryEncode(val!, out byte[]? valBytes))
+            {
+                output.WriteOutput("Unable to encode key or value to bytes.");
+                return;
+            }
+
+            (bool ok, string? err) = actions.TryUpdateMapValue(mapName, keyBytes!, valBytes!);
+            output.WriteOutput(ok ? $"Map '{mapName}' updated." : $"Update failed: {err}");
+        });
+
+        return update;
     }
 
-    private static Command BuildMapRemove(IOutputCommand output)
+    /// <summary>
+    /// Delete utility to delete a map element using it's key.
+    /// </summary>
+    /// <param name="output"></param>
+    /// <returns></returns>
+    private Command BuildMapRemove(IOutputCommand output)
     {
-        throw new NotImplementedException();
-    }
-    
-    /*
-    * Update val : 
-    * map name => loop => find => convert value => try to update / add
-    */
+        var nameArg = new Argument<string>("name") { Description = "map name, as printed by 'map list'" };
+        var keyArg  = new Argument<string>("key")  { Description = "key of the element to delete" };
 
-    /*
-    * Remove val : 
-    * map name => loop => find => key ? => delete if found.
-    */
+        var delete = new Command("delete", "delete an element in a map using its key") { nameArg, keyArg };
+
+        delete.SetAction(pr =>
+        {
+            string mapName = pr.GetValue(nameArg) ?? string.Empty;
+            string rawKey  = pr.GetValue(keyArg)  ?? string.Empty;
+
+            IEbpfMapConfig? mapConf = actions.GetMapConf(mapName);
+            if (mapConf is null)
+            {
+                output.WriteOutput($"Unable to find map with name : {mapName}. Use 'map list' to see all available maps.");
+                return;
+            }
+
+            EbpfMapTypeObj? types = mapConf.KeyValuesTypes;
+            if (types is null)
+            {
+                output.WriteOutput("Unable to get map types configuration.");
+                return;
+            }
+
+            // Only the key type matters here, the value type is unused.
+            if (!TypedValueParser.TryParse(rawKey, types.Value.Key, out object? key, out string? keyErr))
+            {
+                output.WriteOutput($"Invalid key: {keyErr}");
+                return;
+            }
+
+            if (!TryEncode(key!, out byte[]? keyBytes))
+            {
+                output.WriteOutput("Unable to encode key to bytes.");
+                return;
+            }
+
+            (bool ok, string? err) = actions.TryRemoveElement(mapName, keyBytes!);
+            output.WriteOutput(ok ? $"Element removed from '{mapName}'." : $"Delete failed: {err}");
+        });
+
+        return delete;
+    }
+
+    private static bool TryEncode(object value, out byte[]? bytes)
+    {
+        bytes = value switch
+        {
+            byte b      => [b],
+            sbyte sb    => [(byte)sb],
+            bool flag   => [(byte)(flag ? 1 : 0)],
+            short s     => BitConverter.GetBytes(s),
+            ushort us   => BitConverter.GetBytes(us),
+            int i       => BitConverter.GetBytes(i),
+            uint ui     => BitConverter.GetBytes(ui),
+            long l      => BitConverter.GetBytes(l),
+            ulong ul    => BitConverter.GetBytes(ul),
+            float f     => BitConverter.GetBytes(f),
+            double d    => BitConverter.GetBytes(d),
+            Guid g      => g.ToByteArray(),
+            byte[] raw  => raw,
+            string str  => Encoding.UTF8.GetBytes(str),
+            _           => null,
+        };
+
+        return bytes is not null;
+    }
 
     #endregion
 }
