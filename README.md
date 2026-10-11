@@ -151,7 +151,11 @@ hidan/
 
 ---
 
-### 4. Other coming...
+### 4. Execve Hijacking
+**Mechanism**: Hook `sys_execve` to hijack execution path & arguments
+
+Had some trouble to make it works... The code base is there but not able to correctly patch __user filename & args. Refer to TripleCross implementation
+if you want to fix my base code implementation :)
 
 ---
 
