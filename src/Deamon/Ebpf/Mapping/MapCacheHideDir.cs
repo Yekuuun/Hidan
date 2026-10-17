@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Deamon.Ebpf.Abstraction;
 using Deamon.Ebpf.Config;
 using Deamon.Ebpf.Utils;
 using Deamon.Utils;
@@ -6,7 +7,7 @@ using Mango.Interops;
 
 namespace Deamon.Ebpf.Mapping;
 
-internal sealed class MapCacheHideDir() : BaseMapConfig(BpfMapType.Hash)
+internal sealed class MapCacheHideDir() : BaseMapConfig(BpfMapType.Hash, new EbpfMapTypeObj(Key:typeof(string), Val:typeof(byte)))
 {
     private static readonly ReadOnlyCollection<string> directories = ["test_dir"]; //use other.
     public override string Name => "hide_cache_dir";

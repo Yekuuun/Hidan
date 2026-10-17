@@ -102,7 +102,7 @@ typedef struct fd_key {
 
 //----------------------------------------------------
 // ┌────────────────────────────────────┐
-//  OPENAT
+//  READ
 // └────────────────────────────────────┘
 //----------------------------------------------------
 typedef struct sys_enter_read_ctx {
@@ -133,5 +133,27 @@ typedef struct sys_enter_cached_val{
     char *ubuff_adr; //raw address value for __user *buf
     char path[MAX_PATH];
 } sys_enter_cached_val; 
+
+//----------------------------------------------------
+// ┌────────────────────────────────────┐
+//  EXEC
+// └────────────────────────────────────┘
+//----------------------------------------------------
+
+/**
+ * >> cat /sys/kernel/debug/tracing/events/syscalls/sys_enter_execve/format
+ */
+typedef struct sys_enter_execve_ctx {
+    unsigned short common_type;
+    unsigned char common_flags;
+    unsigned char common_preempt_count;
+    int common_pid;
+
+    int __syscall_nr;
+    const char* filename;
+    const char* const* argv;
+    const char* const* envp;
+} sys_enter_execve_ctx;
+
 
 #endif

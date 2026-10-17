@@ -30,6 +30,8 @@
 #include "../data/bpf_ringbuf.h"
 #include "../lib/ftlib.h"
 
+#define OPEN_TARGET "passwd"
+
 /**
  * Hook sys_entry_openat
  * 
@@ -51,7 +53,7 @@ int tp_sys_enter_openat(struct sys_enter_openat_ctx *ctx)
         return 0; //silence.
 
     //only keep passwd for testing.
-    if(__bpf_strstr(filename, "passwd") == NULL)
+    if(__bpf_strstr(filename, OPEN_TARGET) == NULL)
         return 0;
 
     bpf_printk("------");

